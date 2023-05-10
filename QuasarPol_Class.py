@@ -156,9 +156,12 @@ class QuasarPol:
         PA_table = self.get_ParaAngle()
         uids = np.unique(PA_table['member_ous_uid'])
         
+        print('Files will save to', save_directory)
         
         for ids in uids:
             
+            print('Currently download', ids)
+
             # Get data info
             data_info = alma.get_data_info(uids)
             
