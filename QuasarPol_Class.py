@@ -142,11 +142,32 @@ class QuasarPol:
     
     def download(self, *, save_directory=alma.cache_location):
         
+        '''
+        To save files in specific diretory
+        
+        
+        Parameters
+        ----------
+        save_directory : string
+            The directory the files save to. If None will save to alma query cache 
+            directory, '~/.astropy/cache/astroquery/Alma/'.
+        '''
+        
         PA_table = self.get_ParaAngle()
         uids = np.unique(PA_table['member_ous_uid'])
-        # print(uids)
-        print('Current saving directory is : \"', alma.cache_location,'\"')
         
-        link_list = alma.get_data_info(uids[1])
-        print(link_list['access_url'])
-        pass
+        
+        for ids in uids:
+            
+            # Get data info
+            data_info = alma.get_data_info(uids)
+            
+            # Extract the URLs from the data_info table
+            link_list = [row['access_url'] for row in data_info if row['access_url']]
+            alma.cache_location = save_directory
+            
+            # Download files if there are valid URLs
+            if link_list:
+                alma.download_files(link_list)
+            else:
+                print("No valid URLs found for download.")
