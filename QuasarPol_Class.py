@@ -1,3 +1,7 @@
+import os
+import sys
+import tarfile
+
 from astroquery.alma import Alma
 alma=Alma()
 
@@ -84,6 +88,7 @@ class QuasarPol:
         
         Init_PA = []
         End_PA = []
+        Delta_PA = []
         Obs_ids = self.ObsCore_table['obs_id']
         Uids = self.ObsCore_table['member_ous_uid']
         
@@ -132,11 +137,57 @@ class QuasarPol:
             
             end_PA = Angle(ALMA.parallactic_angle(obs_end_Datetime, target_coord), u.deg)
             End_PA.append(end_PA)
+            
+            delta_PA = end_PA - init_PA
+            if abs(delta_PA / u.deg) > 180:
+                delta_PA = (delta_PA / u.deg + 360) * u.deg
+            Delta_PA.append(delta_PA)
         
-        ParaAngle = QTable([Obs_ids, Uids, Init_PA, End_PA], 
-                           names=('obs_id', 'member_ous_uid', 'Initial Parallactic Angle','Final Parallactic Angle'))
+        ParaAngle = QTable([Obs_ids, Uids, Delta_PA, Init_PA, End_PA], 
+                           names=('obs_id', 'member_ous_uid', 'Change_PA', 'Init_PA','End_PA'))
+
         
         return ParaAngle
+    
+    
+    
+    def filter_data(self, change_in_PA):
+        
+        '''
+        Filter the parallactic angle from self.get_ParaAngle by the change of PA.
+        
+        Parameters
+        ----------
+        change_in_PA : float or int (unit: degree)
+            The unit of parallactic angle (eg, degree) can be ignore.
+        
+        Returns
+        -------
+        Filtered data table
+        
+        '''
+        
+        self.get_ParaAngle()
+        
+        obs_id = []
+        member_id = []
+        change = []
+        init = []
+        end = []
+        
+        for i in range(len(self.get_ParaAngle())):
+            if self.get_ParaAngle()['Change_PA'][i] / u.deg > change_in_PA:
+                obs_id.append(self.get_ParaAngle()['obs_id'][i])
+                member_id.append(self.get_ParaAngle()['member_ous_uid'][i])
+                change.append(self.get_ParaAngle()['Change_PA'][i])
+                init.append(self.get_ParaAngle()['Init_PA'][i])
+                end.append(self.get_ParaAngle()['End_PA'][i])
+        
+        Filtered_PA = QTable([obs_id, member_id, change, init, end],
+                             names=['obs_id', 'member_ous_uid', 'Change_PA', 'Init_PA','End_PA'])
+        
+        return Filtered_PA
+
     
     
     
@@ -161,7 +212,7 @@ class QuasarPol:
         for ids in uids:
             
             print('Currently download', ids)
-
+            
             # Get data info
             data_info = alma.get_data_info(uids)
             
@@ -174,3 +225,15 @@ class QuasarPol:
                 alma.download_files(link_list)
             else:
                 print("No valid URLs found for download.")
+    
+    
+    
+    def CASA_version(self):
+        
+        '''
+        
+        
+        
+        '''
+        
+        pass
