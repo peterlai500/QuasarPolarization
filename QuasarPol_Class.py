@@ -191,7 +191,7 @@ class QuasarPol:
     
     
     
-    def download(self, *, save_directory=alma.cache_location):
+    def download(self, *,filtered=True, save_directory=alma.cache_location):
         
         '''
         To save files in specific diretory
@@ -202,9 +202,15 @@ class QuasarPol:
         save_directory : string
             The directory the files save to. If None will save to alma query cache 
             directory, '~/.astropy/cache/astroquery/Alma/'.
+        
+        filtered : bool
+            Whether to use the filtered PA tables. Defult value is True
         '''
         
-        PA_table = self.get_ParaAngle()
+        if filtered is True:
+            PA_table = self.filter_data(self.change_in_PA)
+        else:
+             PA_table = self.get_ParaAngle()
         uids = np.unique(PA_table['member_ous_uid'])
         
         print('Files will save to', save_directory)
