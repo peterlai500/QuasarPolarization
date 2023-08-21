@@ -14,18 +14,34 @@ from astropy.io import fits
 from astroplan import Observer
 
 import numpy as np
+import time
 
 
 
 class QuasarPol:
     
-    def __init__(self, source, sci_obs, table_length):
+    def __init__(self, source, sci_obs, pol):
         '''
         constructor of the class
+        
+        Parameters
+        ---------
+        sci_obs : bool
+            True to return only science datasets, 
+            False to return only calibration, None to return both.
+        pol : str ('Single', 'Dual', 'Full')
+            Types of polarisation products provides
+            'Single' : Return only XX or YY
+            'Dual' : Return datasets contain both XX and YY
+            'Full' : Return datasets contain all types of polarisation, i.e., XX, YY, XY, and YX.
+        table_length : int
+            
+
         '''
         self.science = sci_obs
-        self.len = table_length
+       #self.len = table_length
         self.source = source
+        self.pol = pol
     
     
     def __del__(self):
@@ -51,15 +67,15 @@ class QuasarPol:
         Table with results.
         '''
         
-        self.ALMA_table = alma.query(payload=dict(source_name_alma=self.source),
+        self.ALMA_table = alma.query(payload=dict(source_name_alma=self.source, polarisation_type=self.pol),
                                      science=self.science,
                                      legacy_columns=True, 
-                                     maxrec=self.len
+                                    #maxrec=self.len
                                     )
         
-        self.ObsCore_table = alma.query(payload=dict(source_name_alma=self.source),
+        self.ObsCore_table = alma.query(payload=dict(source_name_alma=self.source, polarisation_type=self.pol),
                                         science=self.science,
-                                        maxrec=self.len
+                                       #maxrec=self.len
                                        )
         
         if legacy_columns == True:    
@@ -243,3 +259,17 @@ class QuasarPol:
         '''
         
         pass
+    
+
+    def untar(self):
+
+
+        tar_directory = self.directory
+        file_list = os.listdir(tar_directory)
+        tar_files = [file for file in file_list if file.endswith('.tar')]
+
+        for tar_file in tar_files:
+            tar_file_path = os.path.join(directory, tar_file)
+            print(tar_file_path)
+            with tarfile.open(tar_file_path, 'r') as tar:
+                tar.extractall(path=tar_directory)
