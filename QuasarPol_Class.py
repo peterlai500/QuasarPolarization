@@ -20,7 +20,7 @@ import time
 
 class QuasarPol:
     
-    def __init__(self, source, sci_obs, pol):
+    def __init__(self, source, sci_obs, pol, table_length):
         '''
         constructor of the class
         
@@ -35,11 +35,11 @@ class QuasarPol:
             'Dual' : Return datasets contain both XX and YY
             'Full' : Return datasets contain all types of polarisation, i.e., XX, YY, XY, and YX.
         table_length : int
-            
+            Suggest seting a big enough number, so the "DALQueryError" won't happened.
 
         '''
         self.science = sci_obs
-       #self.len = table_length
+        self.len = table_length
         self.source = source
         self.pol = pol
     
@@ -70,12 +70,12 @@ class QuasarPol:
         self.ALMA_table = alma.query(payload=dict(source_name_alma=self.source, polarisation_type=self.pol),
                                      science=self.science,
                                      legacy_columns=True, 
-                                    #maxrec=self.len
+                                     maxrec=self.len
                                     )
         
         self.ObsCore_table = alma.query(payload=dict(source_name_alma=self.source, polarisation_type=self.pol),
                                         science=self.science,
-                                       #maxrec=self.len
+                                        maxrec=self.len
                                        )
         
         if legacy_columns == True:    
@@ -107,6 +107,7 @@ class QuasarPol:
         Delta_PA = []
         Obs_ids = self.ObsCore_table['obs_id']
         Uids = self.ObsCore_table['member_ous_uid']
+        Obs_date = self.ALMA_table['Observation date']
         
         for i in range(len(Uids)):
             
@@ -159,22 +160,22 @@ class QuasarPol:
                 delta_PA = (delta_PA / u.deg + 360) * u.deg
             Delta_PA.append(delta_PA)
         
-        ParaAngle = QTable([Obs_ids, Uids, Delta_PA, Init_PA, End_PA], 
-                           names=('obs_id', 'member_ous_uid', 'Change_PA', 'Init_PA','End_PA'))
+        ParaAngle = QTable([Obs_ids, Uids, Obs_date, Delta_PA, Init_PA, End_PA], 
+                           names=('obs_id', 'member_ous_uid', 'Obs_Date', 'Change_PA', 'Init_PA','End_PA'))
 
         
         return ParaAngle
     
     
     
-    def filter_data(self, change_in_PA):
+    def filter_data(self, min_change_in_PA, Max):
         
         '''
         Filter the parallactic angle from self.get_ParaAngle by the change of PA.
         
         Parameters
         ----------
-        change_in_PA : float or int (unit: degree)
+        min_change_in_PA : float or int (unit: degree)
             The unit of parallactic angle (eg, degree) can be ignore.
         
         Returns
@@ -182,25 +183,29 @@ class QuasarPol:
         Filtered data table
         
         '''
-        
+        self.min_PA = min_change_in_PA
+        self.max_PA = Max
+
         self.get_ParaAngle()
         
         obs_id = []
         member_id = []
+        obs_date = []
         change = []
         init = []
         end = []
         
         for i in range(len(self.get_ParaAngle())):
-            if self.get_ParaAngle()['Change_PA'][i] / u.deg > change_in_PA:
+            if Max > self.get_ParaAngle()['Change_PA'][i] / u.deg > min_change_in_PA:
                 obs_id.append(self.get_ParaAngle()['obs_id'][i])
                 member_id.append(self.get_ParaAngle()['member_ous_uid'][i])
+                obs_date.append(self.get_ParaAngle()['Obs_Date'][i])
                 change.append(self.get_ParaAngle()['Change_PA'][i])
                 init.append(self.get_ParaAngle()['Init_PA'][i])
                 end.append(self.get_ParaAngle()['End_PA'][i])
         
-        Filtered_PA = QTable([obs_id, member_id, change, init, end],
-                             names=['obs_id', 'member_ous_uid', 'Change_PA', 'Init_PA','End_PA'])
+        Filtered_PA = QTable([obs_id, member_id, obs_date, change, init, end],
+                             names=['obs_id', 'member_ous_uid', 'Obs_date', 'Change_PA', 'Init_PA','End_PA'])
         
         return Filtered_PA
 
@@ -224,7 +229,7 @@ class QuasarPol:
         '''
         
         if filtered is True:
-            PA_table = self.filter_data(self.change_in_PA)
+            PA_table = self.filter_data(self.min_PA, self.max_PA)
         else:
              PA_table = self.get_ParaAngle()
         uids = np.unique(PA_table['member_ous_uid'])
@@ -250,7 +255,7 @@ class QuasarPol:
     
     
     
-    def CASA_version(self):
+    def CASA_version(self, filtered):
         
         '''
         
