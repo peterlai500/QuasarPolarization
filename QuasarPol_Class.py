@@ -228,6 +228,8 @@ class QuasarPol:
             Whether to use the filtered PA tables. Defult value is True
         '''
         
+        self.directory = save_directory
+
         if filtered is True:
             PA_table = self.filter_data(self.min_PA, self.max_PA)
         else:
@@ -268,13 +270,42 @@ class QuasarPol:
 
     def untar(self):
 
+        '''
+        directly untar all the files downloaded
+        '''
 
         tar_directory = self.directory
         file_list = os.listdir(tar_directory)
-        tar_files = [file for file in file_list if file.endswith('.tar')]
+        tar_files = [file for file in file_list if file.endswith('.tar') or file.startswith('uid')]
 
         for tar_file in tar_files:
-            tar_file_path = os.path.join(directory, tar_file)
-            print(tar_file_path)
+            tar_file_path = os.path.join(tar_directory, tar_file)
+            print('Untaring :',tar_file_path)
+            st = time.time()
             with tarfile.open(tar_file_path, 'r') as tar:
                 tar.extractall(path=tar_directory)
+            et = time.time()
+            rt = et - st
+            print(f'Untar {tar_file} time: {rt:.6f} seconds.')
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
