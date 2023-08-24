@@ -1,6 +1,7 @@
 import os
 import sys
 import tarfile
+import subprocess
 
 from astroquery.alma import Alma
 alma=Alma()
@@ -105,6 +106,7 @@ class QuasarPol:
         Init_PA = []
         End_PA = []
         Delta_PA = []
+        project_code = self.ALMA_table['Project code']
         Obs_ids = self.ObsCore_table['obs_id']
         Uids = self.ObsCore_table['member_ous_uid']
         Obs_date = self.ALMA_table['Observation date']
@@ -160,8 +162,8 @@ class QuasarPol:
                 delta_PA = (delta_PA / u.deg + 360) * u.deg
             Delta_PA.append(delta_PA)
         
-        ParaAngle = QTable([Obs_ids, Uids, Obs_date, Delta_PA, Init_PA, End_PA], 
-                           names=('obs_id', 'member_ous_uid', 'Obs_Date', 'Change_PA', 'Init_PA','End_PA'))
+        ParaAngle = QTable([project_code, Obs_ids, Uids, Obs_date, Delta_PA, Init_PA, End_PA], 
+                           names=('Project code', 'obs_id', 'member_ous_uid', 'Obs_Date', 'Change_PA', 'Init_PA','End_PA'))
 
         
         return ParaAngle
@@ -187,7 +189,7 @@ class QuasarPol:
         self.max_PA = Max
 
         self.get_ParaAngle()
-        
+        project_code = []
         obs_id = []
         member_id = []
         obs_date = []
@@ -197,6 +199,7 @@ class QuasarPol:
         
         for i in range(len(self.get_ParaAngle())):
             if Max > self.get_ParaAngle()['Change_PA'][i] / u.deg > min_change_in_PA:
+                project_code.append(self.get_ParaAngle()['Project code'][i])
                 obs_id.append(self.get_ParaAngle()['obs_id'][i])
                 member_id.append(self.get_ParaAngle()['member_ous_uid'][i])
                 obs_date.append(self.get_ParaAngle()['Obs_Date'][i])
@@ -204,8 +207,8 @@ class QuasarPol:
                 init.append(self.get_ParaAngle()['Init_PA'][i])
                 end.append(self.get_ParaAngle()['End_PA'][i])
         
-        Filtered_PA = QTable([obs_id, member_id, obs_date, change, init, end],
-                             names=['obs_id', 'member_ous_uid', 'Obs_date', 'Change_PA', 'Init_PA','End_PA'])
+        Filtered_PA = QTable([project_code, obs_id, member_id, obs_date, change, init, end],
+                             names=['Project code', 'obs_id', 'member_ous_uid', 'Obs_date', 'Change_PA', 'Init_PA','End_PA'])
         
         return Filtered_PA
 
@@ -254,19 +257,9 @@ class QuasarPol:
                 alma.download_files(link_list)
             else:
                 print("No valid URLs found for download.")
+
     
-    
-    
-    def CASA_version(self, filtered):
-        
-        '''
-        
-        
-        
-        '''
-        
-        pass
-    
+
 
     def untar(self):
 
@@ -284,28 +277,18 @@ class QuasarPol:
             st = time.time()
             with tarfile.open(tar_file_path, 'r') as tar:
                 tar.extractall(path=tar_directory)
-            et = time.time()
-            rt = et - st
-            print(f'Untar {tar_file} time: {rt:.6f} seconds.')
-        
+            print('Done')
+        print('Untar finished')
+
+
+    def run_pipeline(self):
+        '''
+
+        '''
+        working_directory = self.directory
+        bash_cmd = 'ls'
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        pass
