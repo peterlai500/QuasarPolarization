@@ -1,7 +1,7 @@
 from QuasarPol_Class import QuasarPol
 import time
 
-mystep = 2
+mystep = 3
 
 target = QuasarPol('J1924-2914', False, 'Full', 1000)
 data_table = target.get_tables()
@@ -18,7 +18,10 @@ elif mystep == 2:
     print('Done')
 
 elif mystep == 3:
-    
-    target.run_pipeline()
-    
+    target.directory = '/home/pinhsien/Research/Data'
+    print('Start run pipeline script')
+    target.run_pipeline()  
 
+elif mystep == 4:
+    print('Start check casa version')
+    pass

@@ -209,7 +209,7 @@ class QuasarPol:
         
         Filtered_PA = QTable([project_code, obs_id, member_id, obs_date, change, init, end],
                              names=['Project code', 'obs_id', 'member_ous_uid', 'Obs_date', 'Change_PA', 'Init_PA','End_PA'])
-        
+
         return Filtered_PA
 
     
@@ -285,10 +285,30 @@ class QuasarPol:
         '''
 
         '''
-        working_directory = self.directory
-        bash_cmd = 'ls'
+        bash_cmd = 'ls'         # use 'ls' as test, will change back to
+                                # 'casa___ --pipeline -c *member.uid___A001_X1590_X2a76.scriptForPI.py'
+                                # to run script
 
-
-
-
-        pass
+        untar_directory = self.directory
+        f_PA = self.filter_data(self.min_PA, self.max_PA)
+        project = np.unique(f_PA['Project code'])
+        for code in project:
+            script_directory = untar_directory + '/' + code
+            result = subprocess.run(bash_cmd, cwd=script_directory, 
+                                    stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            output = result.stdout.decode()
+            next_dir = output.replace('\n', '')
+            script_directory = script_directory + '/' + next_dir
+            result = subprocess.run(bash_cmd, cwd=script_directory, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            output = result.stdout.decode()
+            next_dir = output.replace('\n', '')
+            script_directory = script_directory + '/' + next_dir
+            result = subprocess.run(bash_cmd, cwd=script_directory, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            output = result.stdout.decode()
+            next_dir = output.replace('\n', '')
+            script_directory = script_directory + '/' + next_dir
+            result = subprocess.run(bash_cmd, cwd=script_directory, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            output = result.stdout.decode()
+            output = output.split('\n')
+            script_directory = script_directory + '/' + output[5]
+            print(script_directory)
