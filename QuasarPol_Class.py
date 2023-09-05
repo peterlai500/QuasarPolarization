@@ -285,17 +285,15 @@ class QuasarPol:
         '''
 
         '''
-        bash_cmd = 'ls'         # use 'ls' as test, will change back to
-                                # 'casa___ --pipeline -c *member.uid___A001_X1590_X2a76.scriptForPI.py'
-                                # to run script
+        pipeline = '.scriptForPI.py'
+        bash_cmd = 'ls'
 
         untar_directory = self.directory
         f_PA = self.filter_data(self.min_PA, self.max_PA)
         project = np.unique(f_PA['Project code'])
         for code in project:
             script_directory = untar_directory + '/' + code
-            result = subprocess.run(bash_cmd, cwd=script_directory, 
-                                    stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            result = subprocess.run(bash_cmd, cwd=script_directory, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             output = result.stdout.decode()
             next_dir = output.replace('\n', '')
             script_directory = script_directory + '/' + next_dir
@@ -311,4 +309,13 @@ class QuasarPol:
             output = result.stdout.decode()
             output = output.split('\n')
             script_directory = script_directory + '/' + output[5]
-            print(script_directory)
+        
+        result = subprocess.run(bash_cmd, cwd=script_directory, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        output = result.stdout.decode()
+        output = output.split('\n')
+        script_file = [file for file in output if pipeline in file]
+        print(f'Run script in {script_directory}')
+        casa_cmd = 'casa641 --pipeline -c' + ' ' + script_directory + '/' + script_file[0]
+        # Use the specific version CASA-6.4.1 for test, 
+        # as long as version part is done will change back to the official command.
+        subprocess.call(['/bin/bash', '-i', '-c', casa_cmd], cwd=script_directory)
