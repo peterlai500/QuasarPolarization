@@ -2,6 +2,7 @@ import os
 import sys
 import tarfile
 import subprocess
+import xml.etree.ElementTree as ET
 
 from astroquery.alma import Alma
 alma=Alma()
@@ -285,13 +286,16 @@ class QuasarPol:
         '''
 
         '''
+        version_xml = '.pipeline_manifest.xml'
         pipeline = '.scriptForPI.py'
         bash_cmd = 'ls'
 
         untar_directory = self.directory
         f_PA = self.filter_data(self.min_PA, self.max_PA)
         project = np.unique(f_PA['Project code'])
+
         for code in project:
+
             script_directory = untar_directory + '/' + code
             result = subprocess.run(bash_cmd, cwd=script_directory, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             output = result.stdout.decode()
@@ -309,13 +313,32 @@ class QuasarPol:
             output = result.stdout.decode()
             output = output.split('\n')
             script_directory = script_directory + '/' + output[5]
+
         
         result = subprocess.run(bash_cmd, cwd=script_directory, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         output = result.stdout.decode()
         output = output.split('\n')
+        
+        xml_file = [file for file in output if version_xml in file]
         script_file = [file for file in output if pipeline in file]
+        print(xml_file, script_file)
+
+        xml_file_path = script_directory + '/' + xml_file[0]
+        tree = ET.parse(xml_file_path)
+        root = tree.getroot()
+        casaversion_element = root.find('.//casaversion')
+
+        if casaversion_element is not None:
+            casaversion = casaversion_element.get('name')
+            print('casa version: ', casaversion)
+            version = casaversion.split('.')
+            casa = casaversion.replace('.', '')
+            casa = casa.replace(casa[-1], '')
+        else:
+            print('casa version element not found.')
+
         print(f'Run script in {script_directory}')
-        casa_cmd = 'casa641 --pipeline -c' + ' ' + script_directory + '/' + script_file[0]
-        # Use the specific version CASA-6.4.1 for test, 
-        # as long as version part is done will change back to the official command.
+        casa_cmd = 'casa' + casa + ' --pipeline -c' + ' ' + script_directory + '/' + script_file[0]
+        print(casa_cmd)
+
         subprocess.call(['/bin/bash', '-i', '-c', casa_cmd], cwd=script_directory)
