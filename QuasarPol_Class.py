@@ -338,7 +338,8 @@ class QuasarPol:
             print('casa version element not found.')
 
         print(f'Run script in {script_directory}')
-        casa_cmd = 'casa' + casa + ' --pipeline -c' + ' ' + script_directory + '/' + script_file[0]
+        casa_cmd = 'casa' + '641' + ' --pipeline -c' + ' ' + script_directory + '/' + script_file[0]
+        # since the libary of version 6.2.1 have some unknown problem, use version 6.4.1 run pipeline as test
         print(casa_cmd)
 
         subprocess.call(['/bin/bash', '-i', '-c', casa_cmd], cwd=script_directory)
