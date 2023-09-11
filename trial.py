@@ -1,42 +1,55 @@
 from QuasarPol_Class import QuasarPol
+from datetime import date
 import time
 
-mystep = 0
+mystep = 1
 
 st = time.time()
 
-target = QuasarPol('J1924-2914', False, 'Dual', 1000)
 storage = '/run/media/pinhsien/Storage24TB/DATA'
+PA_min, PA_max = 5, 10
 
-if mystep == 0:
-    print('Query date from ALMA data archive')
-    data_table = target.get_tables()
-    PA_table = target.get_ParaAngle()
-    print(f'Table length is {len(data)}')
-elif mystep == 2:
-    print('Filter data')
-    f_PA = target.filter_data(10,20)
-elif mystep == 3:
-    target.download(filtered=True, save_directory=storage)
-    print('Start untar')
-    target.untar()
-    print('Done')
-elif mystep == 4:
-    print('Start untar')
-    target.untar()
-    print('Done')
+with open('target_list.txt', 'r') as file:
+    targets = file.readlines()
 
-elif mystep == 5:
-    print('Start run pipeline script')
-    target.run_pipeline()
-    print('DONE')
+for target in targets:
 
-elif mystep == 6:
-    print('Start check casa version')
+    target = target.strip()
+    result = QuasarPol(target, False , 'Dual', 200)
+    
+    if mystep > 0:
+        step = 'Query'
+        PA_table = result.get_ParaAngle()
+        print(f'Querying {target}, data length : {len(PA_table)}.')
 
-    print('DONE')
-else:
-    pass
+    elif mystep > 1:
+        if len(PA_table) > 0:
+            try:
+                step = step + 'and filter'
+                f_PA = result.filtered_PA(PA_min. PA_max)
+                print(f'Filtered {target} data length : {len(f_PA)}.')
+            except:
+                 print('Filter Error')
+            
+            if len(f_PA) == 0: 
+                print(f'No data satify the condition.')
+
+    elif mystep > 2:
+        try:
+            download_path = f'{storage}/{date.today()}'
+            os.system(f'mkdir {download_path}')
+            os.system(f'rm -rf {download_path}/*')
+            result.download(True, download_path)
+        except:
+            print('Download Error')
+    
+    elif mystep > 3:
+
+        result.untar()
+
+
+
+
 et = time.time()
 rt = et - st
-print(f'Runtime : {rt:.0f} seconds.')
+print(f'Querying  : {rt:.0f} seconds.')
