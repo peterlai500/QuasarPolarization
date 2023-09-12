@@ -19,19 +19,18 @@ if mystep > 0:
 
 if mystep > 1:
     if len(PA_table) > 0:
-
         step = step + 'and filter'
         f_PA = result.filter_data(PA_min, PA_max)
-        print(f'Filtered {target} data length : {len(f_PA)}.')
-            
+        print(f'Filtered {target} data length : {len(f_PA)}.') 
         if len(f_PA) == 0: 
             print(f'No data satify the condition.')
 
 if mystep > 2:
     try: 
         step  = step + 'and download'
+        today = str(date.today()).replace('-', '')
         target_for_path = target.replace('-', 'm')
-        download_path = f'{storage}/{date.today()}'
+        download_path = f'{storage}/{today}'
         os.system(f'mkdir {download_path}')
         os.system(f'rm -rf {download_path}/*')
         result.download(True, download_path)
