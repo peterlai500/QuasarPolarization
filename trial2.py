@@ -7,12 +7,12 @@ mystep = 4
 
 st = time.time()
 
-target = 'J1733-1304'
+target = '3C273'
 storage = '/data2/users/pinhsien/DATA'
-PA_min, PA_max = 2, 5
+PA_min, PA_max = -20, -19
 
-result = QuasarPol(target, False , 'Dual', 100)
-    
+result = QuasarPol(target, True, 'Dual', 100)
+
 if mystep > 0:
     step = 'Query'
     PA_table = result.get_ParaAngle()
@@ -29,15 +29,22 @@ if mystep > 1:
 if mystep > 2:
     step += ', download'
     today = str(date.today()).replace('-', '')
-    target_for_path = target.replace('-', 'm')
-    download_path = f'{storage}/{today}'
+    target_for_path = target.replace('-', 'm').replace('+', 'p')
+    download_path = f'{storage}/{target}{today}'
     os.system(f'mkdir {download_path}')
     os.system(f'rm -rf {download_path}/*')
-    result.download(filtered=True, save_directory=download_path)
+    result.download(filtered=False, save_directory=download_path)
 
 if mystep > 3:
     step += ', untar'
     result.untar()
+
+if mystep == 4:
+    step += 'run pipeline'
+    try:
+        result.run_pipeline()
+    except:
+        pass
 
 et = time.time()
 rt = et - st
