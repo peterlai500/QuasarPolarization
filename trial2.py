@@ -6,7 +6,7 @@ mystep = 2
 
 st = time.time()
 
-target = 'J1924-2914'
+target = 'J1733-1304'
 storage = '/run/media/pinhsien/Storage24TB/DATA'
 PA_min, PA_max = 5, 10
 
@@ -24,11 +24,11 @@ if mystep > 1:
         f_PA = result.filter_data(PA_min, PA_max)
         print(f'Filtered {target} data length : {len(f_PA)}.')
             
-        if len(f_PA) == 0:
+        if len(f_PA) == 0: 
             print(f'No data satify the condition.')
 
 if mystep > 2:
-    try:
+    try: 
         step  = step + 'and download'
         target_for_path = target.replace('-', 'm')
         download_path = f'{storage}/{date.today()}'
