@@ -1,6 +1,7 @@
 from QuasarPol_Class import QuasarPol
 from datetime import date
 import time
+import os
 
 mystep = 4
 
@@ -15,7 +16,7 @@ result = QuasarPol(target, False , 'Dual', 100)
 if mystep > 0:
     step = 'Query'
     PA_table = result.get_ParaAngle()
-    print(f'Querying {target}, data length : {len(PA_table)}.')
+    print(f'Querying {target} data length : {len(PA_table)}.')
 
 if mystep > 1:
     if len(PA_table) > 0:
@@ -26,23 +27,17 @@ if mystep > 1:
             print(f'No data satify the condition.')
 
 if mystep > 2:
-    try: 
-        step += ', download'
-        today = str(date.today()).replace('-', '')
-        target_for_path = target.replace('-', 'm')
-        download_path = f'{storage}/{today}'
-        os.system(f'mkdir {download_path}')
-        os.system(f'rm -rf {download_path}/*')
-        result.download(True, download_path)
-    except:
-        print('Download Error or no data to download')
+    step += ', download'
+    today = str(date.today()).replace('-', '')
+    target_for_path = target.replace('-', 'm')
+    download_path = f'{storage}/{today}'
+    os.system(f'mkdir {download_path}')
+    os.system(f'rm -rf {download_path}/*')
+    result.download(filtered=True, save_directory=download_path)
 
 if mystep > 3:
-    try:
-        step += ', untar'
-        result.untar()
-    except:
-        print('Untar error or no file to untar')
+    step += ', untar'
+    result.untar()
 
 et = time.time()
 rt = et - st
