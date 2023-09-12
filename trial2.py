@@ -2,15 +2,15 @@ from QuasarPol_Class import QuasarPol
 from datetime import date
 import time
 
-mystep = 2
+mystep = 4
 
 st = time.time()
 
 target = 'J1733-1304'
 storage = '/data2/users/pinhsien/DATA'
-PA_min, PA_max = 5, 10
+PA_min, PA_max = 2, 5
 
-result = QuasarPol(target, False , 'Dual', 500)
+result = QuasarPol(target, False , 'Dual', 100)
     
 if mystep > 0:
     step = 'Query'
@@ -19,7 +19,7 @@ if mystep > 0:
 
 if mystep > 1:
     if len(PA_table) > 0:
-        step = step + 'and filter'
+        step += ', filter'
         f_PA = result.filter_data(PA_min, PA_max)
         print(f'Filtered {target} data length : {len(f_PA)}.') 
         if len(f_PA) == 0: 
@@ -27,7 +27,7 @@ if mystep > 1:
 
 if mystep > 2:
     try: 
-        step  = step + 'and download'
+        step += ', download'
         today = str(date.today()).replace('-', '')
         target_for_path = target.replace('-', 'm')
         download_path = f'{storage}/{today}'
@@ -36,15 +36,13 @@ if mystep > 2:
         result.download(True, download_path)
     except:
         print('Download Error or no data to download')
-        pass
 
 if mystep > 3:
     try:
-        step = step + 'and untar'
+        step += ', untar'
         result.untar()
     except:
         print('Untar error or no file to untar')
-        pass
 
 et = time.time()
 rt = et - st
