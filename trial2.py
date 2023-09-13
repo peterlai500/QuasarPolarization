@@ -9,7 +9,7 @@ mystep = 4
 st = time.time()
 
 target = '3C273'
-storage = '/run/media/pinhsien/Storage24TB/DATA'
+storage = '/data2/users/pinhsien/DATA'
 PA_min, PA_max = -20, -19
 
 result = QuasarPol(target, True, 'Dual', 100)
