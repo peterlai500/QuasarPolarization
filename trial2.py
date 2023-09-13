@@ -2,13 +2,14 @@ from QuasarPol_Class import QuasarPol
 from datetime import date
 import time
 import os
+import numpy as np
 
-mystep = 4
+mystep = 5
 
 st = time.time()
 
 target = '3C273'
-storage = '/data2/users/pinhsien/DATA'
+storage = '/run/media/pinhsien/Storage24TB/DATA'
 PA_min, PA_max = -20, -19
 
 result = QuasarPol(target, True, 'Dual', 100)
@@ -22,7 +23,7 @@ if mystep > 1:
     if len(PA_table) > 0:
         step += ', filter'
         f_PA = result.filter_data(PA_min, PA_max)
-        print(f'Filtered {target} data length : {len(f_PA)}.') 
+        print(f'Filtered {target} data length : {len(np.unique(f_PA["member_ous_uid"]))}.') 
         if len(f_PA) == 0: 
             print(f'No data satify the condition.')
 
@@ -40,11 +41,7 @@ if mystep > 3:
     result.untar()
 
 if mystep == 4:
-    step += 'run pipeline'
-    try:
-        result.run_pipeline()
-    except:
-        pass
+    pass
 
 et = time.time()
 rt = et - st

@@ -284,62 +284,74 @@ class QuasarPol:
 
     def run_pipeline(self):
         '''
-
+        This code will identify the CASA version and run casa pipeline automatically.
         '''
         version_xml = '.pipeline_manifest.xml'
         pipeline = '.scriptForPI.py'
+        
         bash_cmd = 'ls'
 
         untar_directory = self.directory
-        f_PA = self.filter_data(self.min_PA, self.max_PA)
-        project = np.unique(f_PA['Project code'])
+        folders = subprocess.run(bash_cmd, cwd=download_path, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        folders = folders.stdout.decode()
+        folders = folders.split('\n')
+        folders.pop()
 
-        for code in project:
+        # Into proposal_id/
+        for project_id in folders:
+            path = f'{download_path}/{project_id}'
+            science_goals = subprocess.run(bash_cmd, cwd=path, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            science_goals = science_goals.stdout.decode()
+            science_goals = science_goals.split('\n')
+            science_goals.pop()
+            
+            # Into science_goal.ouss_id/
+            for science_goal in science_goals:
+                science_dire = f'{path}{science_goal}'
+                groups = subprocess.run(bash_cmd, cwd=science_dire, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                groups = groups.stdout.decode()
+                groups = groups.split('\n')
+                groups.pop()
 
-            script_directory = untar_directory + '/' + code
-            result = subprocess.run(bash_cmd, cwd=script_directory, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            output = result.stdout.decode()
-            next_dir = output.replace('\n', '')
-            script_directory = script_directory + '/' + next_dir
-            result = subprocess.run(bash_cmd, cwd=script_directory, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            output = result.stdout.decode()
-            next_dir = output.replace('\n', '')
-            script_directory = script_directory + '/' + next_dir
-            result = subprocess.run(bash_cmd, cwd=script_directory, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            output = result.stdout.decode()
-            next_dir = output.replace('\n', '')
-            script_directory = script_directory + '/' + next_dir
-            result = subprocess.run(bash_cmd, cwd=script_directory, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            output = result.stdout.decode()
-            output = output.split('\n')
-            script_directory = script_directory + '/' + output[5]
+                # Into member.ouss_id/
+                for group in groups:
+                    group_dire = f'{science_dire}{group}'
+                    members = subprocess.run(bash_cmd, cwd=group_dire, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    members = members.stdout.decode()
+                    members = members.split('\n')
+                    members.pop()
+                    
+                    for member in members:
+                        member_dire = f'{group_dire}{member}'
+                        data_set = subprocess.run(bash_cmd, cwd=member_dire, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        data_set = data_set.stdout.decode()
+                        data_set = data_set.split('\n')
+                        data_set.pop()
+                            
+                        script_dire = f'{member_dire}{data_set[-1]}'
+                        script = subprocess.run('ls', cwd=script_dire, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        script = script.stdout.decode()
+                        script = script.split('\n')
+                        script.pop()
+                        
+                        xml_file = [file for file in script if version_xml in file]
+                        script_file = [file for file in script if pipeline in file]
 
-        
-        result = subprocess.run(bash_cmd, cwd=script_directory, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        output = result.stdout.decode()
-        output = output.split('\n')
-        
-        xml_file = [file for file in output if version_xml in file]
-        script_file = [file for file in output if pipeline in file]
-        print(xml_file, script_file)
-
-        xml_file_path = script_directory + '/' + xml_file[0]
-        tree = ET.parse(xml_file_path)
-        root = tree.getroot()
-        casaversion_element = root.find('.//casaversion')
-
-        if casaversion_element is not None:
-            casaversion = casaversion_element.get('name')
-            print('casa version: ', casaversion)
-            version = casaversion.split('.')
-            casa = casaversion.replace('.', '')
-            casa = casa.replace(casa[-1], '')
-        else:
-            print('casa version element not found.')
-
-        print(f'Run script in {script_directory}')
-        casa_cmd = 'casa' + '641' + ' --pipeline -c' + ' ' + script_directory + '/' + script_file[0]
-        # since the libary of version 6.2.1 have some unknown problem, use version 6.4.1 run pipeline as test
-        print(casa_cmd)
-
-        subprocess.call(['/bin/bash', '-i', '-c', casa_cmd], cwd=script_directory)
+                        # Use XML get CASA version
+                        xml_file_path = f'{script_dire}/{xml_file[0]}'
+                        tree = ET.parse(xml_file_path)
+                        root = tree.getroot()
+                        casaversion_element = root.find('.//casaversion')
+                        
+                        if casaversion_element is not None:
+                            casaversion = casaversion_element.get('name')
+                            print('casa version: ', casaversion)
+                            version = casaversion.split('.')
+                            casa = casaversion.replace('.', '')
+                            casa = casa.replace(casa[-1], '')
+                            casaversion = casaversion.replace('.', '')[0:3]
+                            casa_cmd = f'casa{casaversion} --pipeline -c {script_dire}/{script_file[0]}'
+                            print(f'Run script in {script_directory}')
+                            subprocess.call(['/bin/bash', '-i', '-c', casa_cmd], cwd=script_dire)
+                        else:
+                            print('casa version element not found.')
