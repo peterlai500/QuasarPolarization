@@ -4,7 +4,7 @@ import time
 import os
 import numpy as np
 
-mystep = 5
+mystep = 4
 
 st = time.time()
 
@@ -41,7 +41,7 @@ if mystep > 3:
     result.untar()
 
 if mystep == 4:
-    pass
+    result.run_pipeline()
 
 et = time.time()
 rt = et - st
