@@ -30,7 +30,7 @@ if mystep > 2:
     step += ', download'
     today = str(date.today()).replace('-', '')
     target_for_path = target.replace('-', 'm').replace('+', 'p')
-    download_path = f'{storage}/{target}{today}'
+    download_path = f'{storage}/{target}.{today}'
     os.system(f'mkdir {download_path}')
     os.system(f'rm -rf {download_path}/*')
     result.download(filtered=False, save_directory=download_path)
