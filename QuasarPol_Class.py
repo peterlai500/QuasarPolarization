@@ -279,6 +279,7 @@ class QuasarPol:
             with tarfile.open(tar_file_path, 'r') as tar:
                 tar.extractall(path=tar_directory)
             print('Done')
+        subprocess.run('rm -rf *.pickle', cwd=tar_directory, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         print('Untar finished')
 
 
@@ -289,7 +290,7 @@ class QuasarPol:
         version_xml = '.pipeline_manifest.xml'
         pipeline = '.scriptForPI.py'
         
-        bash_cmd = 'ls'
+        bash_cmd = 'ls -d */'
 
         untar_directory = self.directory
         folders = subprocess.run(bash_cmd, cwd=untar_directory, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -299,7 +300,7 @@ class QuasarPol:
 
         # Into proposal_id/
         for project_id in folders:
-            path = f'{undar_directory}/{project_id}'
+            path = f'{untar_directory}/{project_id}'
             science_goals = subprocess.run(bash_cmd, cwd=path, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             science_goals = science_goals.stdout.decode()
             science_goals = science_goals.split('\n')
