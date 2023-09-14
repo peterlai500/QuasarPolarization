@@ -299,7 +299,7 @@ class QuasarPol:
 
         # Into proposal_id/
         for project_id in folders:
-            path = f'{download_path}/{project_id}'
+            path = f'{undar_directory}/{project_id}'
             science_goals = subprocess.run(bash_cmd, cwd=path, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             science_goals = science_goals.stdout.decode()
             science_goals = science_goals.split('\n')
