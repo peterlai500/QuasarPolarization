@@ -352,7 +352,7 @@ class QuasarPol:
                             casa = casa.replace(casa[-1], '')
                             casaversion = casaversion.replace('.', '')[0:3]
                             casa_cmd = f'casa{casaversion} --pipeline -c {script_dire}/{script_file[0]}'
-                            print(f'Run script in {script_directory}')
+                            print(f'Run script in {script_dire}')
                             subprocess.call(['/bin/bash', '-i', '-c', casa_cmd], cwd=script_dire)
                         else:
                             print('casa version element not found.')
