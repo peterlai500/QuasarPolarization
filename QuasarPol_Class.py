@@ -292,7 +292,7 @@ class QuasarPol:
         bash_cmd = 'ls'
 
         untar_directory = self.directory
-        folders = subprocess.run(bash_cmd, cwd=download_path, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        folders = subprocess.run(bash_cmd, cwd=untar_directory, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         folders = folders.stdout.decode()
         folders = folders.split('\n')
         folders.pop()
