@@ -353,6 +353,26 @@ class QuasarPol:
                             casaversion = casaversion.replace('.', '')[0:3]
                             casa_cmd = f'casa{casaversion} --pipeline -c {script_dire}/{script_file[0]}'
                             print(f'Run script in {script_dire}')
-                            subprocess.call(['/bin/bash', '-i', '-c', casa_cmd], cwd=script_dire)
+
+                            try:
+                                subprocess.call(['/bin/bash', '-i', '-c', casa_cmd], cwd=script_dire)
+                            except:
+                                os.system(f'rm -rf {member_dire}/calibrated/')
+                                if casaversion[0] == '6':
+                                    casa_cmd = 'casa641 --pipeline -c {script_dire}/{script_file[0]}'
+                                    subprocess.call(['/bin/bash', '-i', '-c', casa_cmd], cwd=script_dire)
+                                elif casaversion == '540':
+                                    casa_cmd = 'casa561 --pipeline -c {script_dire}/{script_file[0]}'
+                                    subprocess.call(['/bin/bash', '-i', '-c', casa_cmd], cwd=script_dire)
+                                elif casaversion == '470':
+                                    casa_cmd = 'casa472 --pipeline -c {script_dire}/{script_file[0]}'
+                                    subprocess.call(['/bin/bash', '-i', '-c', casa_cmd], cwd=script_dire)
+                                elif casaversion == '472':
+                                    casa_cmd = 'casa470 --pipeline -c {script_dire}/{script_file[0]}'
+                                    subprocess.call(['/bin/bash', '-i', '-c', casa_cmd], cwd=script_dire)
+                                elif casaversion[:2] == 45:
+                                    casa_cmd = 'casa453 --pipeline -c {script_dire}/{script_file[0]}'
+                                    subprocess.call(['/bin/bash', '-i', '-c', casa_cmd], cwd=script_dire)
+                        
                         else:
                             print('casa version element not found.')
