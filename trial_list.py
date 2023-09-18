@@ -11,16 +11,16 @@ with open('target_list.txt', 'r') as file:
 
 for target in targets:
     target = target.strip()
-    result = QuasarPol(target, True, 'Dual', 100)
+    result = QuasarPol(target, False, 'Dual', 100)
     
     PA_table = result.get_ParaAngle()
     if len(PA_table) != 0:
-        # print(f"---------\n {target} has {len(np.unique(PA_table['proposal_id]))} data.")
+        print(f"---------\n{target} has {len(np.unique(PA_table['proposal_id']))} data.")
         f_PA = result.filter_data(10, 15)
 
         if len(f_PA) != 0:
-          #  print(f"{target} has {len(np.unique(f_PA['Project code]))} data satisfy th constrain.")
-          #   print(f"Downloading {len(np.unique(f_PA['Project code]))} for {target}")
+            print(f"{target} has {len(np.unique(f_PA['Project code']))} data satisfy th constrain.")
+            print(f"Downloading {len(np.unique(f_PA['Project code']))} for {target}")
             today = str(date.today()).replace('-', '')
             target_for_path = target.replace('-', 'm').replace('+', 'p')
             download_path = f'{storage}/{target}.{today}'
