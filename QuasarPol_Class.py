@@ -69,21 +69,26 @@ class QuasarPol:
         Table with results.
         '''
         
-        self.ALMA_table = alma.query(payload=dict(source_name_alma=self.source, polarisation_type=self.pol),
+        if legacy_columns == True:
+            try:
+                ALMA = alma.query(payload=dict(source_name_alma=self.source, polarisation_type=self.pol),
+                                  science=self.science,
+                                  legacy_columns=True, 
+                                  maxrec=self.len
+                                 )
+            except:
+                print('DALQueryError')
+            return ALMA
+
+        else:
+            try:
+                ObsCore = alma.query(payload=dict(source_name_alma=self.source, polarisation_type=self.pol),
                                      science=self.science,
-                                     legacy_columns=True, 
                                      maxrec=self.len
                                     )
-        
-        self.ObsCore_table = alma.query(payload=dict(source_name_alma=self.source, polarisation_type=self.pol),
-                                        science=self.science,
-                                        maxrec=self.len
-                                       )
-        
-        if legacy_columns == True:    
-            return self.ALMA_table
-        else:
-            return self.ObsCore_table
+            except:
+                print('DALQueryError')
+            return ObsCore
     
     
     
@@ -101,34 +106,34 @@ class QuasarPol:
         
         '''
         
-        self.get_tables()
+        ObsCore_table = self.get_tables()
+        ALMA_table = self.get_tables(legacy_columns=True)
         ALMA = Observer.at_site("ALMA")
         
         Init_PA = []
         End_PA = []
         Delta_PA = []
-        project_code = self.ALMA_table['Project code']
-        Obs_ids = self.ObsCore_table['obs_id']
-        Uids = self.ObsCore_table['member_ous_uid']
-        Obs_date = self.ALMA_table['Observation date']
+        Obs_ids = ObsCore_table['obs_id']
+        Uids = ObsCore_table['member_ous_uid']
+        Obs_date = ALMA_table['Observation date']
         
         for i in range(len(Uids)):
             
             ALMA = Observer.at_site("ALMA")
             
             # Get source coordinate
-            Ra = self.ALMA_table['RA'][i]
-            Dec = self.ALMA_table['Dec'][i]
+            Ra = ALMA_table['RA'][i]
+            Dec = ALMA_table['Dec'][i]
             target_coord = SkyCoord(ra=Ra*u.deg, dec=Dec*u.deg)
             
             # Get date
-            date = self.ALMA_table['Observation date'][i]
+            date = ALMA_table['Observation date'][i]
             [day, month, year] = date.split('-')
             obs_date = year + '-' + month + '-' + day
             
             # Get observation time information
-            start_time = self.ObsCore_table['t_min'][i]
-            duration_time = self.ObsCore_table['t_exptime'][i]
+            start_time = ObsCore_table['t_min'][i]
+            duration_time = ObsCore_table['t_exptime'][i]
             end_time = start_time + duration_time
             
             # Transform into the format we can understand (UTC)
@@ -163,10 +168,10 @@ class QuasarPol:
                 delta_PA = (delta_PA / u.deg + 360) * u.deg
             Delta_PA.append(delta_PA)
         
-        ParaAngle = QTable([project_code, Obs_ids, Uids, Obs_date, Delta_PA, Init_PA, End_PA], 
-                           names=('Project code', 'obs_id', 'member_ous_uid', 'Obs_Date', 'Change_PA', 'Init_PA','End_PA'))
+        ParaAngle = QTable([Obs_ids, Uids, Obs_date, Delta_PA, Init_PA, End_PA], 
+                           names=('obs_id', 'member_ous_uid', 'Obs_Date', 'Change_PA', 'Init_PA','End_PA'))
 
-        
+         
         return ParaAngle
     
     
@@ -189,8 +194,8 @@ class QuasarPol:
         self.min_PA = min_change_in_PA
         self.max_PA = Max
 
-        self.get_ParaAngle()
-        project_code = []
+        ParaAngle = self.get_ParaAngle()
+
         obs_id = []
         member_id = []
         obs_date = []
@@ -198,18 +203,17 @@ class QuasarPol:
         init = []
         end = []
         
-        for i in range(len(self.get_ParaAngle())):
-            if Max > self.get_ParaAngle()['Change_PA'][i] / u.deg > min_change_in_PA:
-                project_code.append(self.get_ParaAngle()['Project code'][i])
-                obs_id.append(self.get_ParaAngle()['obs_id'][i])
-                member_id.append(self.get_ParaAngle()['member_ous_uid'][i])
-                obs_date.append(self.get_ParaAngle()['Obs_Date'][i])
-                change.append(self.get_ParaAngle()['Change_PA'][i])
-                init.append(self.get_ParaAngle()['Init_PA'][i])
-                end.append(self.get_ParaAngle()['End_PA'][i])
+        for i in range(len(ParaAngle)):
+            if Max > ParaAngle['Change_PA'][i] / u.deg > min_change_in_PA:
+
+                member_id.append(ParaAngle['member_ous_uid'][i])
+                obs_date.append(ParaAngle['Obs_Date'][i])
+                change.append(ParaAngle['Change_PA'][i])
+                init.append(ParaAngle['Init_PA'][i])
+                end.append(ParaAngle['End_PA'][i])
         
-        Filtered_PA = QTable([project_code, obs_id, member_id, obs_date, change, init, end],
-                             names=['Project code', 'obs_id', 'member_ous_uid', 'Obs_date', 'Change_PA', 'Init_PA','End_PA'])
+        Filtered_PA = QTable([member_id, obs_date, change, init, end],
+                             names=['member_ous_uid', 'Obs_date', 'Change_PA', 'Init_PA','End_PA'])
 
         return Filtered_PA
 
