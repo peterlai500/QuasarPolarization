@@ -15,7 +15,7 @@ for target in targets:
     
     PA_table = result.get_ParaAngle()
     if len(PA_table) != 0:
-        print(f"---------\n{target} has {len(np.unique(PA_table['proposal_id']))} data.")
+        # print(f"---------\n{target} has {len(np.unique(PA_table['proposal_id']))} data.")
         f_PA = result.filter_data(10, 15)
 
         if len(f_PA) != 0:
