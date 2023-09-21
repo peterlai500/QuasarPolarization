@@ -70,6 +70,7 @@ class QuasarPol:
         '''
         
         if legacy_columns == True:
+            ALMA = []
             try:
                 ALMA = alma.query(payload=dict(source_name_alma=self.source, polarisation_type=self.pol),
                                   science=self.science,
@@ -78,6 +79,7 @@ class QuasarPol:
                                  )
             
             except:
+<<<<<<< HEAD
                 print('DALQueryError')
             
             return ALMA
@@ -85,14 +87,28 @@ class QuasarPol:
         else:
             try:
                 ObsCore_format = alma.query(payload=dict(source_name_alma=self.source, polarisation_type=self.pol),
+=======
+                print(f'{self.source} ALMA legacy table DALQueryError')
+            return ALMA
+
+        else:
+            ObsCore = []
+            try:    
+                ObsCore = alma.query(payload=dict(source_name_alma=self.source, polarisation_type=self.pol),
+>>>>>>> 54d20ad6d27406290df42f52c857181c85cc6070
                                      science=self.science,
                                      maxrec=self.len
                                     )
             
             except:
+<<<<<<< HEAD
                 print('DALQueryError')
             
             return ObsCore_format
+=======
+                print(f'{self.source} ObsCore table DALQueryError')
+            return ObsCore
+>>>>>>> 54d20ad6d27406290df42f52c857181c85cc6070
     
     
     
@@ -112,18 +128,16 @@ class QuasarPol:
         
         ObsCore_table = self.get_tables()
         ALMA_table = self.get_tables(legacy_columns=True)
-        ALMA = Observer.at_site("ALMA")
+        ALMA_location = Observer.at_site("ALMA")
         
         Init_PA = []
         End_PA = []
         Delta_PA = []
-        Obs_ids = ObsCore_table['obs_id']
+        Obs_ids = ObsCore_table['obs_id'][0:]
         Uids = ObsCore_table['member_ous_uid']
         Obs_date = ALMA_table['Observation date']
         
         for i in range(len(Uids)):
-            
-            ALMA = Observer.at_site("ALMA")
             
             # Get source coordinate
             Ra = ALMA_table['RA'][i]
@@ -152,7 +166,7 @@ class QuasarPol:
             obs_init_Datetime = Time(obs_date + ' ' + obs_start_time)
             
             # Initial Parallactic Angle calculation and create list
-            init_PA = Angle(ALMA.parallactic_angle(obs_init_Datetime, target_coord), u.deg)
+            init_PA = Angle(ALMA_location.parallactic_angle(obs_init_Datetime, target_coord), u.deg)
             Init_PA.append(init_PA)
             
             # Final Parallactic Angle Part
@@ -164,7 +178,7 @@ class QuasarPol:
             obs_end_time = str(hours)+':'+str(minutes)+':'+str(seconds)
             obs_end_Datetime = Time(obs_date + ' ' + obs_end_time)
             
-            end_PA = Angle(ALMA.parallactic_angle(obs_end_Datetime, target_coord), u.deg)
+            end_PA = Angle(ALMA_location.parallactic_angle(obs_end_Datetime, target_coord), u.deg)
             End_PA.append(end_PA)
             
             delta_PA = end_PA - init_PA
