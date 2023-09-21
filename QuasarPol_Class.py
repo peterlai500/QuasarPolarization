@@ -18,7 +18,7 @@ from astroplan import Observer
 import numpy as np
 import time
 
-
+alma.archice_url = 'https://almascience.nao.ac.jp/aq/'
 
 class QuasarPol:
     
@@ -77,7 +77,17 @@ class QuasarPol:
                                   legacy_columns=True, 
                                   maxrec=self.len
                                  )
+            
             except:
+<<<<<<< HEAD
+                print('DALQueryError')
+            
+            return ALMA
+
+        else:
+            try:
+                ObsCore_format = alma.query(payload=dict(source_name_alma=self.source, polarisation_type=self.pol),
+=======
                 print(f'{self.source} ALMA legacy table DALQueryError')
             return ALMA
 
@@ -85,12 +95,20 @@ class QuasarPol:
             ObsCore = []
             try:    
                 ObsCore = alma.query(payload=dict(source_name_alma=self.source, polarisation_type=self.pol),
+>>>>>>> 54d20ad6d27406290df42f52c857181c85cc6070
                                      science=self.science,
                                      maxrec=self.len
                                     )
+            
             except:
+<<<<<<< HEAD
+                print('DALQueryError')
+            
+            return ObsCore_format
+=======
                 print(f'{self.source} ObsCore table DALQueryError')
             return ObsCore
+>>>>>>> 54d20ad6d27406290df42f52c857181c85cc6070
     
     
     
