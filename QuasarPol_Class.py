@@ -18,7 +18,7 @@ from astroplan import Observer
 import numpy as np
 import time
 
-
+alma.archice_url = 'https://almascience.nao.ac.jp/aq/'
 
 class QuasarPol:
     
@@ -76,19 +76,23 @@ class QuasarPol:
                                   legacy_columns=True, 
                                   maxrec=self.len
                                  )
+            
             except:
                 print('DALQueryError')
+            
             return ALMA
 
         else:
             try:
-                ObsCore = alma.query(payload=dict(source_name_alma=self.source, polarisation_type=self.pol),
+                ObsCore_format = alma.query(payload=dict(source_name_alma=self.source, polarisation_type=self.pol),
                                      science=self.science,
                                      maxrec=self.len
                                     )
+            
             except:
                 print('DALQueryError')
-            return ObsCore
+            
+            return ObsCore_format
     
     
     
