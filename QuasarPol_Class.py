@@ -68,7 +68,7 @@ class QuasarPol:
         
         Table with results.
         '''
-        
+
         if legacy_columns == True:
             ALMA = []
             try:
@@ -79,39 +79,25 @@ class QuasarPol:
                                  )
             
             except:
-<<<<<<< HEAD
-                print('DALQueryError')
+                print('{self.source} ALMA legacy table DALQueryError')
             
             return ALMA
 
         else:
+            ObsCore_format = []
             try:
                 ObsCore_format = alma.query(payload=dict(source_name_alma=self.source, polarisation_type=self.pol),
-=======
-                print(f'{self.source} ALMA legacy table DALQueryError')
-            return ALMA
-
-        else:
-            ObsCore = []
-            try:    
-                ObsCore = alma.query(payload=dict(source_name_alma=self.source, polarisation_type=self.pol),
->>>>>>> 54d20ad6d27406290df42f52c857181c85cc6070
-                                     science=self.science,
-                                     maxrec=self.len
-                                    )
-            
+                                            science=self.science,
+                                            maxrec=self.len
+                                           )
             except:
-<<<<<<< HEAD
-                print('DALQueryError')
-            
-            return ObsCore_format
-=======
                 print(f'{self.source} ObsCore table DALQueryError')
-            return ObsCore
->>>>>>> 54d20ad6d27406290df42f52c857181c85cc6070
-    
-    
-    
+            return ObsCore_format
+
+
+
+
+
     def get_ParaAngle(self):
         
         '''
@@ -125,7 +111,7 @@ class QuasarPol:
         initial and final PAs.
         
         '''
-        
+
         ObsCore_table = self.get_tables()
         ALMA_table = self.get_tables(legacy_columns=True)
         ALMA_location = Observer.at_site("ALMA")
@@ -189,11 +175,12 @@ class QuasarPol:
         ParaAngle = QTable([Obs_ids, Uids, Obs_date, Delta_PA, Init_PA, End_PA], 
                            names=('obs_id', 'member_ous_uid', 'Obs_Date', 'Change_PA', 'Init_PA','End_PA'))
 
-         
         return ParaAngle
-    
-    
-    
+
+
+
+
+
     def filter_data(self, min_change_in_PA, Max):
         
         '''
@@ -235,9 +222,10 @@ class QuasarPol:
 
         return Filtered_PA
 
-    
-    
-    
+
+
+
+
     def download(self, *,filtered=True, save_directory=alma.cache_location):
         
         '''
@@ -305,10 +293,14 @@ class QuasarPol:
         print('Untar finished')
 
 
+
+
+
     def run_pipeline(self):
         '''
         This code will identify the CASA version and run casa pipeline automatically.
         '''
+
         version_xml = '.pipeline_manifest.xml'
         pipeline = '.scriptForPI.py'
         
