@@ -17,6 +17,7 @@ from astroplan import Observer
 
 import numpy as np
 import time
+from datetime import datetime
 
 alma.archice_url = 'https://almascience.nao.ac.jp/aq/'
 
@@ -71,27 +72,19 @@ class QuasarPol:
 
         if legacy_columns == True:
             ALMA = []
-            try:
-                ALMA = alma.query(payload=dict(source_name_alma=self.source, polarisation_type=self.pol),
-                                  science=self.science,
-                                  legacy_columns=True, 
-                                  maxrec=self.len
-                                 )
-            
-            except:
-                print('{self.source} ALMA legacy table DALQueryError')
-            
+            ALMA = alma.query(payload=dict(source_name_alma=self.source, polarisation_type=self.pol),
+                              science=self.science,
+                              legacy_columns=True, 
+                              maxrec=self.len
+                             )
             return ALMA
 
         else:
             ObsCore_format = []
-            try:
-                ObsCore_format = alma.query(payload=dict(source_name_alma=self.source, polarisation_type=self.pol),
-                                            science=self.science,
-                                            maxrec=self.len
-                                           )
-            except:
-                print(f'{self.source} ObsCore table DALQueryError')
+            ObsCore_format = alma.query(payload=dict(source_name_alma=self.source, polarisation_type=self.pol),
+                                        science=self.science,
+                                        maxrec=self.len
+                                       )
             return ObsCore_format
 
 
@@ -119,9 +112,8 @@ class QuasarPol:
         Init_PA = []
         End_PA = []
         Delta_PA = []
-        Obs_ids = ObsCore_table['obs_id'][0:]
+        Obs_ids = ObsCore_table['obs_id']
         Uids = ObsCore_table['member_ous_uid']
-        Obs_date = ALMA_table['Observation date']
         
         for i in range(len(Uids)):
             
@@ -133,7 +125,6 @@ class QuasarPol:
             # Get date
             date = ALMA_table['Observation date'][i]
             [day, month, year] = date.split('-')
-            obs_date = year + '-' + month + '-' + day
             
             # Get observation time information
             start_time = ObsCore_table['t_min'][i]
@@ -141,29 +132,27 @@ class QuasarPol:
             end_time = start_time + duration_time
             
             # Transform into the format we can understand (UTC)
-            hours = int(start_time / 3600)
-            remaining_seconds = start_time % 3600
-            minutes = int(remaining_seconds / 60)
-            seconds = remaining_seconds - minutes * 60
-            
-            obs_start_time = str(hours)+':'+str(minutes)+':'+str(seconds)
-            
+            init_hours = int(start_time / 3600)
+            init_minutes = int((start_time % 3600) / 60)
+            init_seconds = int(start_time % 3600 - init_minutes * 60)
+                       
             # combine time and date
-            obs_init_Datetime = Time(obs_date + ' ' + obs_start_time)
+
+            init_object = datetime(int(year), int(month), int(day), init_hours, init_minutes, init_seconds)
+            obs_init_Datetime = Time(init_object, scale='utc')
             
             # Initial Parallactic Angle calculation and create list
             init_PA = Angle(ALMA_location.parallactic_angle(obs_init_Datetime, target_coord), u.deg)
             Init_PA.append(init_PA)
-            
+
             # Final Parallactic Angle Part
-            hours = int(end_time / 3600)
-            remaining_seconds = end_time % 3600
-            minutes = int(remaining_seconds / 60)
-            seconds = remaining_seconds - minutes * 60
-            
-            obs_end_time = str(hours)+':'+str(minutes)+':'+str(seconds)
-            obs_end_Datetime = Time(obs_date + ' ' + obs_end_time)
-            
+            end_hours = int(end_time / 3600)
+            end_minutes = int(end_time % 3600 / 60)
+            end_seconds = int(end_time % 3600 - end_minutes * 60)
+
+            end_object = datetime(int(year), int(month), int(day), end_hours, end_minutes, end_seconds)
+            obs_end_Datetime = Time(end_object, scale='utc')
+
             end_PA = Angle(ALMA_location.parallactic_angle(obs_end_Datetime, target_coord), u.deg)
             End_PA.append(end_PA)
             
@@ -390,3 +379,5 @@ class QuasarPol:
                         
                         else:
                             print('casa version element not found.')
+    def Imaging(self):
+        pass
