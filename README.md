@@ -5,7 +5,7 @@
 ## Enviroment requirements
 Most of the necessary packages can be install through the `Quasarpol.yml` file.  
 By running in bash:  
-`$ conda env create -f Quasarpol.yml `
+`conda env create -f Quasarpol.yml `
 
 - astropy(>=4.2.1)
 
