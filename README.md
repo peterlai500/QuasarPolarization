@@ -2,6 +2,9 @@
 
 ## Goal
 
+## Obtaining Package
+Can directly obtain the source code and notebook file from Github with `git clone` command
+
 ## Enviroment requirements
 Most of the necessary packages can be install through the `Quasarpol.yml` file.  
 By running in bash:  

@@ -38,8 +38,6 @@ class QuasarPol:
             'Dual' : Return datasets contain both XX and YY
             'Full' : Return datasets contain all types of polarisation, i.e., XX, YY, XY, and YX.
         table_length : int
-            Suggest seting a big enough number, so the "DALQueryError" won't happened.
-
         '''
         self.science = sci_obs
         self.len = table_length
@@ -52,7 +50,13 @@ class QuasarPol:
         Destrucror of th class
         '''
     
+    def help(self):
+        print("\nQuasarPol package combining astroquery.alma and may other astronomical "
+              "Python packages. Aims to")
     
+
+
+
     def get_tables(self, *, legacy_columns=False):
         
         '''
@@ -112,6 +116,7 @@ class QuasarPol:
         Init_PA = []
         End_PA = []
         Delta_PA = []
+        Obs_date = []
         Obs_ids = ObsCore_table['obs_id']
         Uids = ObsCore_table['member_ous_uid']
         
@@ -121,45 +126,51 @@ class QuasarPol:
             Ra = ALMA_table['RA'][i]
             Dec = ALMA_table['Dec'][i]
             target_coord = SkyCoord(ra=Ra*u.deg, dec=Dec*u.deg)
-            
+
             # Get date
             date = ALMA_table['Observation date'][i]
             [day, month, year] = date.split('-')
-            
+            Obs_date.append(date)
             # Get observation time information
             start_time = ObsCore_table['t_min'][i]
             duration_time = ObsCore_table['t_exptime'][i]
             end_time = start_time + duration_time
-            
+
             # Transform into the format we can understand (UTC)
             init_hours = int(start_time / 3600)
             init_minutes = int((start_time % 3600) / 60)
             init_seconds = int(start_time % 3600 - init_minutes * 60)
-                       
-            # combine time and date
 
+            # combine time and date
             init_object = datetime(int(year), int(month), int(day), init_hours, init_minutes, init_seconds)
             obs_init_Datetime = Time(init_object, scale='utc')
             
             # Initial Parallactic Angle calculation and create list
             init_PA = Angle(ALMA_location.parallactic_angle(obs_init_Datetime, target_coord), u.deg)
             Init_PA.append(init_PA)
-
+            
             # Final Parallactic Angle Part
+            end_day = int(day)
+            while end_time > 86400:
+                end_time = end_time - 86400
+                end_day += 1
+
             end_hours = int(end_time / 3600)
             end_minutes = int(end_time % 3600 / 60)
             end_seconds = int(end_time % 3600 - end_minutes * 60)
                 
-            end_object = datetime(int(year), int(month), int(day),end_hours, end_minutes, end_seconds)
+            end_object = datetime(int(year), int(month), int(end_day), int(end_hours), end_minutes, end_seconds)
             obs_end_Datetime = Time(end_object, scale='utc')
 
             end_PA = Angle(ALMA_location.parallactic_angle(obs_end_Datetime, target_coord), u.deg)
             End_PA.append(end_PA)
             
             delta_PA = end_PA - init_PA
+            '''
             if abs(delta_PA / u.deg) > 180:
                 delta_PA = (delta_PA / u.deg + 360) * u.deg
-            Delta_PA.append(delta_PA)
+            '''
+            Delta_PA.append(abs(delta_PA))
         
         ParaAngle = QTable([Obs_ids, Uids, Obs_date, Delta_PA, Init_PA, End_PA], 
                            names=('obs_id', 'member_ous_uid', 'Obs_Date', 'Change_PA', 'Init_PA','End_PA'))
