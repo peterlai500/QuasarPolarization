@@ -6,7 +6,7 @@
 Can directly obtain the source code and notebook file from Github with `git clone` command
 
 ## Enviroment requirements
-Most of the necessary packages can be install through the [`Quasarpol.yml`](https://github.com/peterlai500/QuasarPolarization/blob/main/script_template.py) file.  
+Most of the necessary packages can be install through the [`Quasarpol.yml`](https://github.com/peterlai500/QuasarPolarization/blob/main/Quasarpol.yml) file.  
 By running in bash:  
 `conda env create -f Quasarpol.yml `
 
