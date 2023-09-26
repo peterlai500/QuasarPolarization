@@ -27,12 +27,16 @@ Run the below line in the envornment installed require paakage, and save the ini
 ### For users would like to do interactively. 
 Use the jupyter notebook for following step.
 1. Check the data using `result.get_table()`. 
-2. Check the parallactic angle change for each observation using `result.get_ParaAngle`
-3. Filter the data in cerrtain parallactic angle change range using `filter_data(min_change_in_PA, Max_change_in_PA)`.  
+
+2. Check the parallactic angle change for each observation using `result.get_ParaAngle()`.
+
+3. Filter the data in cerrtain parallactic angle change range using  
+`filter_data(min_change_in_PA, Max_change_in_PA)`.  
    It is OK to directly replace the `min_change_in_PA` and `Max_change_in_PA` in to the lower bound and upper bound you would like to be.
+
 4. Downloading and untaring data is quite simple. If you want to download the flitered data you just run:  
-`download_path = path/to/your/storage`
-`result.download(filtered=True, save_directory=download_path)`
+`download_path = path/to/your/storage`  
+`result.download(filtered=True, save_directory=download_path)`  
 `result.untar()`
 5. Running calibration script can be achieve just running  
 `result.run_script()`
