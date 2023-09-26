@@ -1,0 +1,20 @@
+# QuasarPol Package
+
+## Goal
+
+## Obtaining Package
+Can directly obtain the source code and notebook file from Github with `git clone` command
+
+## Enviroment requirements
+Most of the necessary packages can be install through the `Quasarpol.yml` file.  
+By running in bash:  
+`conda env create -f Quasarpol.yml `
+
+- astropy(>=4.2.1)
+
+- astroquery(v0.4.7.dev8738)  
+  Common use install:  
+  `python -m pip install -U --pre astroquery`  
+  Installing all the mandatory and optional dependencies in  astroquery by adding `[all]`:  
+  `python -m pip install -U --pre astroquery[all]`
+## 

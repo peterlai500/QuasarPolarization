@@ -181,7 +181,7 @@ class QuasarPol:
 
 
 
-    def filter_data(self, min_change_in_PA, Max):
+    def filter_data(self, min_change_in_PA, Max_change_in_PA):
         
         '''
         Filter the parallactic angle from self.get_ParaAngle by the change of PA.
@@ -197,7 +197,7 @@ class QuasarPol:
         
         '''
         self.min_PA = min_change_in_PA
-        self.max_PA = Max
+        self.max_PA = Max_change_in_PA
 
         ParaAngle = self.get_ParaAngle()
 
@@ -296,7 +296,7 @@ class QuasarPol:
 
 
 
-    def run_pipeline(self):
+    def run_script(self):
         '''
         This code will identify the CASA version and run casa pipeline automatically.
         '''
