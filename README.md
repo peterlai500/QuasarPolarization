@@ -22,7 +22,7 @@ Initialize the package:
 Run the below line in the envornment installed require paakage, and save the initialized result in the varible wou like, for me it is the `result`, i.e.,  
 `result = QuasarPol(source, sci_obs, pol, table_length)`  
 
-- To visualized the practical effect, the `sample.ipynb` provde more detailed demonstration.
+- To visualized the practical effect, the [`sample.ipynb`](https://github.com/peterlai500/QuasarPolarization/blob/main/sample.ipynb) provide more detailed demonstration.
 
 ### For users would like to do interactively. 
 Use the jupyter notebook for following step.
@@ -41,3 +41,7 @@ Use the jupyter notebook for following step.
 5. Running calibration script can be achieve just running  
 `result.run_script()`
 
+- - -
+### For adavnced users
+It is totally fine to do the upper tasks with python scripts.  
+The [`script_template.py`]() in the repository can be regard as reference of composing a python script.
