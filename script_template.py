@@ -16,6 +16,11 @@ result = QuasarPol(target, calibration, polarization, data_length)
 PA_filter = result.filter_data(min_change_in_PA, Max_change_in_PA)
 # The filter step is to obtain the lower bound and upper bound varibles.
 
+# Can sort the data like the the below.
+today = str(date.today()).replace('-', '')
+target_name = target.replace('+', 'p')
+download_path = f'{storage}/{target_name}.{today}'
+
 result.download(filtered=False, save_directory=storage)
 result.untar()
 result.run_script()

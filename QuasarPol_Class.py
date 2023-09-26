@@ -49,12 +49,6 @@ class QuasarPol:
         '''
         Destrucror of th class
         '''
-    
-    def help(self):
-        print("\nQuasarPol package combining astroquery.alma and may other astronomical "
-              "Python packages. Aims to")
-    
-
 
 
     def get_tables(self, *, legacy_columns=False):
@@ -209,7 +203,7 @@ class QuasarPol:
         end = []
         
         for i in range(len(ParaAngle)):
-            if Max > ParaAngle['Change_PA'][i] / u.deg > min_change_in_PA:
+            if Max_change_in_PA > ParaAngle['Change_PA'][i] / u.deg > min_change_in_PA:
 
                 member_id.append(ParaAngle['member_ous_uid'][i])
                 obs_date.append(ParaAngle['Obs_Date'][i])
@@ -369,7 +363,9 @@ class QuasarPol:
                             print(f'Run script in {script_dire}')
 
                             try:
+                                os.system("export LD_PRELOAD='/usr/lib64/libfreetype.so'")
                                 subprocess.call(['/bin/bash', '-i', '-c', casa_cmd], cwd=script_dire)
+
                             except:
                                 os.system(f'rm -rf {member_dire}/calibrated/')
                                 if casaversion[0] == '6':
