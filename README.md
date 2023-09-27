@@ -1,6 +1,7 @@
 # QuasarPol Package
 
 ## Goal
+To charactorized the properties of accretion gas steam around even horizon by massively systemically downloading, calibrating, and doing fitting to proper quasar.
 
 ## Obtaining
 Can directly obtain the source code and notebook file from GitHub with the `git clone` command.
