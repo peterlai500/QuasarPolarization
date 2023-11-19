@@ -1,13 +1,14 @@
 from QuasarPol_Class import QuasarPol
+from datetime import date, datetime
 
-target = ''             # your target
-calibration = False     # you're free to modify in True or False
-polarization = ''       # polarization type can be 'Single', 'Dual', 'Full'
-data_length = 5000      # Integer
-PA_min = 40             # Parallactic angle change lower bound
-PA_max = 50             # Parallactic angle change upper bound
+target = 'J1924-2914'               # your target
+calibration = False                 # you're free to modify in True or False
+polarization = 'False'              # polarization type can be 'Single', 'Dual', 'Full'
+data_length = 20000                 # Integer
+min_change_in_PA = -33.54           # Parallactic angle change lower bound
+Max_change_in_PA = -33.53           # Parallactic angle change upper bound
 
-storage = ''            # yout storage directory
+storage = '/run/media/pinhsien/Storage24TB/DATA'            # yout storage directory
 
 result = QuasarPol(target, calibration, polarization, data_length)
 
@@ -18,9 +19,9 @@ PA_filter = result.filter_data(min_change_in_PA, Max_change_in_PA)
 
 # Can sort the data like the the below.
 today = str(date.today()).replace('-', '')
-target_name = target.replace('+', 'p')
+target_name = target.replace('+', 'p').replace('-', 'm')
 download_path = f'{storage}/{target_name}.{today}'
 
-result.download(filtered=False, save_directory=storage)
+result.download(filtered=True, save_directory=download_path)
 result.untar()
-result.run_script()
+# result.run_script()

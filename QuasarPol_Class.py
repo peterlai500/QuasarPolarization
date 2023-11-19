@@ -104,43 +104,47 @@ class QuasarPol:
         '''
 
         ObsCore_table = self.get_tables()
-        ALMA_table = self.get_tables(legacy_columns=True)
+        # ALMA_table    = self.get_tables(legacy_columns=True)
         ALMA_location = Observer.at_site("ALMA")
         
-        Init_PA = []
-        End_PA = []
-        Delta_PA = []
-        Obs_date = []
-        Obs_ids = ObsCore_table['obs_id']
-        Uids = ObsCore_table['member_ous_uid']
+        Init_PA     = []
+        End_PA      = []
+        Delta_PA    = []
+        Obs_date    = []
+        End_date    = []
+        
+        proposal_id = ObsCore_table['proposal_id']
+        Uids        = ObsCore_table['member_ous_uid']
+        Group_id    = ObsCore_table['group_ous_uid']
         
         for i in range(len(Uids)):
             
             # Get source coordinate
-            Ra = ALMA_table['RA'][i]
-            Dec = ALMA_table['Dec'][i]
+            Ra = ObsCore_table['s_ra'][i]
+            Dec = ObsCore_table['s_dec'][i]
             target_coord = SkyCoord(ra=Ra*u.deg, dec=Dec*u.deg)
 
-            # Get date
-            date = ALMA_table['Observation date'][i]
-            [day, month, year] = date.split('-')
-            Obs_date.append(date)
-            
             # Get the time information
             start_time = ObsCore_table['t_min'][i]
             start_time = Time(start_time,format='mjd').utc.iso
             start_time = datetime.fromisoformat(start_time)
+            obs_date = start_time.date()
+            obs_date = obs_date.strftime("%d-%m-%Y")
+            Obs_date.append(obs_date)
 
-            end_time   = ObsCore_table['t_max'][i]
+            end_time = ObsCore_table['t_max'][i]
             end_time = Time(end_time, format='mjd').utc.iso
             end_time = datetime.fromisoformat(end_time)
+            end_date = end_time.date()
+            end_date = end_date.strftime("%d-%m-%Y")
+            End_date.append(end_date)
 
             # Initial Parallactic Angle calculation and create list
-            init_PA = ALMA_location.parallactic_angle(start_time, target_coord)
+            init_PA = Angle(ALMA_location.parallactic_angle(start_time, target_coord), u.deg)
             Init_PA.append(init_PA)
             
             # End Parallactic Angle
-            end_PA = ALMA_location.parallactic_angle(end_time, target_coord)
+            end_PA = Angle(ALMA_location.parallactic_angle(end_time, target_coord), u.deg)
             End_PA.append(end_PA)
             
             delta_PA = end_PA - init_PA
@@ -148,10 +152,10 @@ class QuasarPol:
             if abs(delta_PA / u.deg) > 180:
                 delta_PA = (delta_PA / u.deg + 360) * u.deg
             '''
-            Delta_PA.append(abs(delta_PA))
+            Delta_PA.append(delta_PA)
         
-        ParaAngle = QTable([Obs_ids, Uids, Obs_date, Delta_PA, Init_PA, End_PA], 
-                           names=('obs_id', 'member_ous_uid', 'Obs_Date', 'Change_PA', 'Init_PA','End_PA'))
+        ParaAngle = QTable([proposal_id, Group_id, Uids, Obs_date, End_date, Delta_PA, Init_PA, End_PA], 
+                           names=('proposal_id', 'group_ous_uid', 'member_ous_uid', 'Obs_date', 'End_date', 'Change_PA', 'Init_PA', 'End_PA'))
 
         return ParaAngle
 
@@ -179,24 +183,29 @@ class QuasarPol:
 
         ParaAngle = self.get_ParaAngle()
 
-        obs_id = []
-        member_id = []
-        obs_date = []
-        change = []
-        init = []
-        end = []
+        Init_PA     = []
+        End_PA      = []
+        Delta_PA    = []
+        Obs_date    = []
+        End_date    = []
+        proposal_id = []
+        Uids        = []
+        Group_id    = []
         
         for i in range(len(ParaAngle)):
-            if Max_change_in_PA > ParaAngle['Change_PA'][i] / u.deg > min_change_in_PA:
+            if min_change_in_PA < ParaAngle['Change_PA'][i] / u.deg < Max_change_in_PA:
 
-                member_id.append(ParaAngle['member_ous_uid'][i])
-                obs_date.append(ParaAngle['Obs_Date'][i])
-                change.append(ParaAngle['Change_PA'][i])
-                init.append(ParaAngle['Init_PA'][i])
-                end.append(ParaAngle['End_PA'][i])
+                proposal_id.append(ParaAngle['proposal_id'][i])
+                Uids.append(ParaAngle['member_ous_uid'][i])
+                Group_id.append(ParaAngle['group_ous_uid'][i])
+                Obs_date.append(ParaAngle['Obs_date'][i])
+                End_date.append(ParaAngle['End_date'][i])
+                Delta_PA.append(ParaAngle['Change_PA'][i])
+                Init_PA.append(ParaAngle['Init_PA'][i])
+                End_PA.append(ParaAngle['End_PA'][i])
         
-        Filtered_PA = QTable([member_id, obs_date, change, init, end],
-                             names=['member_ous_uid', 'Obs_date', 'Change_PA', 'Init_PA','End_PA'])
+        Filtered_PA = QTable([proposal_id, Group_id, Uids, Obs_date, End_date, Delta_PA, Init_PA, End_PA],
+                             names=['proposal_id', 'group_ous_uid', 'member_ous_uid', 'Obs_date', 'End_date', 'Change_PA', 'Init_PA','End_PA'])
 
         return Filtered_PA
 
@@ -282,93 +291,48 @@ class QuasarPol:
         version_xml = '.pipeline_manifest.xml'
         pipeline = '.scriptForPI.py'
         
-        bash_cmd = 'ls -d */'
-
         untar_directory = self.directory
-        folders = subprocess.run(bash_cmd, cwd=untar_directory, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        folders = folders.stdout.decode()
-        folders = folders.split('\n')
-        folders.pop()
 
-        # Into proposal_id/
-        for project_id in folders:
-            path = f'{untar_directory}/{project_id}'
-            science_goals = subprocess.run(bash_cmd, cwd=path, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            science_goals = science_goals.stdout.decode()
-            science_goals = science_goals.split('\n')
-            science_goals.pop()
-            
-            # Into science_goal.ouss_id/
-            for science_goal in science_goals:
-                science_dire = f'{path}{science_goal}'
-                groups = subprocess.run(bash_cmd, cwd=science_dire, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                groups = groups.stdout.decode()
-                groups = groups.split('\n')
-                groups.pop()
+        f_PA = self.filter_data(self.min_PA, self.Max_PA)
 
-                # Into member.ouss_id/
-                for group in groups:
-                    group_dire = f'{science_dire}{group}'
-                    members = subprocess.run(bash_cmd, cwd=group_dire, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    members = members.stdout.decode()
-                    members = members.split('\n')
-                    members.pop()
-                    
-                    for member in members:
-                        member_dire = f'{group_dire}{member}'
-                        data_set = subprocess.run(bash_cmd, cwd=member_dire, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                        data_set = data_set.stdout.decode()
-                        data_set = data_set.split('\n')
-                        data_set.pop()
-                            
-                        script_dire = f'{member_dire}{data_set[-1]}'
-                        script = subprocess.run('ls', cwd=script_dire, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                        script = script.stdout.decode()
-                        script = script.split('\n')
-                        script.pop()
-                        
-                        xml_file = [file for file in script if version_xml in file]
-                        script_file = [file for file in script if pipeline in file]
+        proposal_id = np.unique(f_PA['proposal_id'])
+        group_id    = np.unique(f_PA['group_ous_uid'])
+        member_ous_id = np.unique(f_PA['member_ous_uid'])
+        print(f'Files at the {untar_directory} directory')
+        
+        for Proposal_ID in proposal_id:
+            science_goal_path = f'{untar_directory}/{Proposal_ID}'
+            output = subprocess.run("ls", cwd=science_goal_path, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            output = output.stdout.decode()
+            output = output.split('\n')
+            output.pop()
 
-                        # Use XML get CASA version
-                        xml_file_path = f'{script_dire}/{xml_file[0]}'
-                        tree = ET.parse(xml_file_path)
+            for Group_ID in group_id:
+                for Member_ID in member_ous_id:
+                    Group_ID  = Group_ID.replace('/', '_').replace(':', '_')
+                    Member_ID = Member_ID.replace('/', '_').replace(':', '_')
+                    for science_id in output:
+                        script_path = f'{science_goal_path}/{science_id}/group.{Group_ID}/member.{Member_ID}/script'
+                        script_files = subprocess.run("ls", cwd=script_path, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        script_files = script_files.stdout.decode()
+                        script_files = script_files.split('\n')
+                        script_files.pop()
+
+                        xml_file = [file for file in script_files if version_xml in file]
+                        script_py = [file for file in script_files if pipeline in file]
+                        tree = ET.parse(f'{script_path}/{xml_file[0]}')
                         root = tree.getroot()
                         casaversion_element = root.find('.//casaversion')
-                        
                         if casaversion_element is not None:
                             casaversion = casaversion_element.get('name')
-                            print('casa version: ', casaversion)
-                            version = casaversion.split('.')
-                            casa = casaversion.replace('.', '')
-                            casa = casa.replace(casa[-1], '')
-                            casaversion = casaversion.replace('.', '')[0:3]
-                            casa_cmd = f'casa{casaversion} --pipeline -c {script_dire}/{script_file[0]}'
-                            print(f'Run script in {script_dire}')
-
-                            try:
-                                os.system("export LD_PRELOAD='/usr/lib64/libfreetype.so'")
-                                subprocess.call(['/bin/bash', '-i', '-c', casa_cmd], cwd=script_dire)
-
-                            except:
-                                os.system(f'rm -rf {member_dire}/calibrated/')
-                                if casaversion[0] == '6':
-                                    casa_cmd = 'casa641 --pipeline -c {script_dire}/{script_file[0]}'
-                                    subprocess.call(['/bin/bash', '-i', '-c', casa_cmd], cwd=script_dire)
-                                elif casaversion == '540':
-                                    casa_cmd = 'casa561 --pipeline -c {script_dire}/{script_file[0]}'
-                                    subprocess.call(['/bin/bash', '-i', '-c', casa_cmd], cwd=script_dire)
-                                elif casaversion == '470':
-                                    casa_cmd = 'casa472 --pipeline -c {script_dire}/{script_file[0]}'
-                                    subprocess.call(['/bin/bash', '-i', '-c', casa_cmd], cwd=script_dire)
-                                elif casaversion == '472':
-                                    casa_cmd = 'casa470 --pipeline -c {script_dire}/{script_file[0]}'
-                                    subprocess.call(['/bin/bash', '-i', '-c', casa_cmd], cwd=script_dire)
-                                elif casaversion[:2] == 45:
-                                    casa_cmd = 'casa453 --pipeline -c {script_dire}/{script_file[0]}'
-                                    subprocess.call(['/bin/bash', '-i', '-c', casa_cmd], cwd=script_dire)
-                        
+                            print(f'CASA version: {casaversion}')
                         else:
-                            print('casa version element not found.')
+                            print('No found compatible version')
+                        version = casaversion.replace('.', '')[:3]
+                        pipeline_cmd = f'casa{version} --pipeline {script_path}/{script_py[0]}'
+                        print(f'Run script in {script_path}')
+                        subprocess.call(['/bin/bash', '-i', '-c', pipeline_cmd], cwd=script_dire)
+
+
     def Imaging(self):
         pass
