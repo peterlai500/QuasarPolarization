@@ -272,7 +272,6 @@ class QuasarPol:
         for tar_file in tar_files:
             tar_file_path = os.path.join(tar_directory, tar_file)
             print('Untaring :',tar_file_path)
-            st = time.time()
             with tarfile.open(tar_file_path, 'r') as tar:
                 tar.extractall(path=tar_directory)
             print('Done')
@@ -293,7 +292,7 @@ class QuasarPol:
         
         untar_directory = self.directory
 
-        f_PA = self.filter_data(self.min_PA, self.Max_PA)
+        f_PA = self.filter_data(self.min_PA, self.max_PA)
 
         proposal_id = np.unique(f_PA['proposal_id'])
         group_id    = np.unique(f_PA['group_ous_uid'])
@@ -329,9 +328,15 @@ class QuasarPol:
                         else:
                             print('No found compatible version')
                         version = casaversion.replace('.', '')[:3]
-                        pipeline_cmd = f'casa{version} --pipeline {script_path}/{script_py[0]}'
+                        pipeline_cmd = f"casa{version} --pipeline -c {script_path}/{script_py[0]}"
                         print(f'Run script in {script_path}')
-                        subprocess.call(['/bin/bash', '-i', '-c', pipeline_cmd], cwd=script_dire)
+                        try:
+                            subprocess.call(['/bin/bash', '-i', '-c', pipeline_cmd], cwd=script_path)
+                            # os.chdir(script_path)
+                            # os.system(pipeline_cmd)
+                            # subprocess.run(pipeline_cmd, cwd=script_path, shell=True)
+                        except subprocess.CalledProcessError as e:
+                            print(f"Error running command: {e}")
 
 
     def Imaging(self):
