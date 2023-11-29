@@ -47,10 +47,5 @@ It is totally fine to do the upper tasks with Python scripts.
 The [`script_template.py`](https://github.com/peterlai500/QuasarPolarization/blob/main/script_template.py) in the repository can be regarded as the reference for composing a python script.
 
 ## Caution
-Running CASA pipeline script may cause some systemic errors, such as the OS's in-built library not being compatible with CASA versions and you may need to manually downgrade the libraries. 
-
-
-
-
-
-
+1. Running CASA pipeline script may cause some systemic errors, such as the OS's in-built library not being compatible with CASA versions and you may need to manually downgrade the libraries. Suggest process the data after 2021-05-10, that the data compatible version in CASA 6.x.x
+2. The parallactic angle is calculated using the observation time of the entire observation. The result is highly incorrect regarding the coverage as the target you want to analysis.

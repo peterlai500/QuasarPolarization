@@ -3,6 +3,7 @@ import sys
 import tarfile
 import subprocess
 import xml.etree.ElementTree as ET
+import fileinput
 
 from astroquery.alma import Alma
 alma=Alma()
@@ -19,7 +20,7 @@ import numpy as np
 import time
 from datetime import datetime
 
-alma.archice_url = 'https://almascience.nao.ac.jp/aq/'
+alma.archice_url = 'https://almascience.nao.ac.jp/aq/'              
 
 class QuasarPol:
     
@@ -289,6 +290,8 @@ class QuasarPol:
 
         version_xml = '.pipeline_manifest.xml'
         pipeline = '.scriptForPI.py'
+        variable_name_to_modify = "DOSPLIT"
+        new_value = True
         
         untar_directory = self.directory
 
@@ -310,8 +313,11 @@ class QuasarPol:
                 for Member_ID in member_ous_id:
                     Group_ID  = Group_ID.replace('/', '_').replace(':', '_')
                     Member_ID = Member_ID.replace('/', '_').replace(':', '_')
+                    member_path = f'{science_goal_path}/{science_id}/group.{Group_ID}/member.{Member_ID}'
+                    self.data_path = member_path
+
                     for science_id in output:
-                        script_path = f'{science_goal_path}/{science_id}/group.{Group_ID}/member.{Member_ID}/script'
+                        script_path = f'{member_path}/script'
                         script_files = subprocess.run("ls", cwd=script_path, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                         script_files = script_files.stdout.decode()
                         script_files = script_files.split('\n')
@@ -330,14 +336,45 @@ class QuasarPol:
                         version = casaversion.replace('.', '')[:3]
                         pipeline_cmd = f"casa{version} --pipeline -c {script_path}/{script_py[0]}"
                         print(f'Run script in {script_path}')
+
+                        try:
+                            with open(script_py[0], "r") as file:
+                                lines = file.readlines()
+                                
+                            for i, line in enumerate(lines):
+                                if variable_name_to_modify in line:
+                                    if "DOSPLIT = False" in line:
+                                        lines[i] = f"{variable_name_to_modify} = {new_value}\n"
+                                    break
+                            
+                            else:
+                                lines.insert(0, f"{variable_name_to_modify} = {new_value}\n")
+
+                            with open(script_py[0], "w") as file:
+                                file.wirtelines(lines)
+                        except ImportError:
+                            print("Error: The script file could not be imported.")
+
                         try:
                             subprocess.call(['/bin/bash', '-i', '-c', pipeline_cmd], cwd=script_path)
-                            # os.chdir(script_path)
-                            # os.system(pipeline_cmd)
-                            # subprocess.run(pipeline_cmd, cwd=script_path, shell=True)
                         except subprocess.CalledProcessError as e:
                             print(f"Error running command: {e}")
 
 
-    def Imaging(self):
-        pass
+    def fitting(self):
+        # Go into the calibrated direcrory
+        calibrated_dire = f'{self.data_path}/calibrated/working'
+        ms_files = subprocess.run('ls *.ms -d', cwd=calibrated_dire, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        ms_files = ms_files.stdout.decode()
+        ms_files = ms_files.split('\n')
+        ms_files.pop()
+        for file in ms_files:
+            print(files)
+            '''
+            obs = listobs(vis=files, 
+                          field=self.source,
+                          intent='CALIBRATE_BANDPASS#ON_SOURCE',
+                          verbose=False)
+            print(f"There are {obs['nfields']} of {self.source}")
+            '''
+        # listobs(vis='',) 

@@ -29,3 +29,6 @@ if step >= 2:
     result.untar()
 if step >= 3:
     result.run_script()
+
+result.data_path = '/run/media/pinhsien/Storage24TB/DATA/J1924m2914.20231120/2021.1.01209.S/science_goal.uid___A001_X2df9_X4d/group.uid___A001_X2df9_X54/member.uid___A001_X2df9_X55'
+result.fitting()
