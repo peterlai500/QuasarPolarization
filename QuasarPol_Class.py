@@ -309,56 +309,59 @@ class QuasarPol:
             output = output.split('\n')
             output.pop()
 
-            for Group_ID in group_id:
-                for Member_ID in member_ous_id:
-                    Group_ID  = Group_ID.replace('/', '_').replace(':', '_')
-                    Member_ID = Member_ID.replace('/', '_').replace(':', '_')
-                    member_path = f'{science_goal_path}/{science_id}/group.{Group_ID}/member.{Member_ID}'
-                    self.data_path = member_path
+            for science_goal_id in output:
+                science_goal_path = f"{science_goal_path}/{science_goal_id}"
 
-                    for science_id in output:
-                        script_path = f'{member_path}/script'
-                        script_files = subprocess.run("ls", cwd=script_path, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                        script_files = script_files.stdout.decode()
-                        script_files = script_files.split('\n')
-                        script_files.pop()
+                for Group_ID in group_id:
+                    for Member_ID in member_ous_id:
+                        Group_ID  = Group_ID.replace('/', '_').replace(':', '_')
+                        Member_ID = Member_ID.replace('/', '_').replace(':', '_')
+                        member_path = f'{science_goal_path}/group.{Group_ID}/member.{Member_ID}'
+                        self.data_path = member_path
 
-                        xml_file = [file for file in script_files if version_xml in file]
-                        script_py = [file for file in script_files if pipeline in file]
-                        tree = ET.parse(f'{script_path}/{xml_file[0]}')
-                        root = tree.getroot()
-                        casaversion_element = root.find('.//casaversion')
-                        if casaversion_element is not None:
-                            casaversion = casaversion_element.get('name')
-                            print(f'CASA version: {casaversion}')
-                        else:
-                            print('No found compatible version')
-                        version = casaversion.replace('.', '')[:3]
-                        pipeline_cmd = f"casa{version} --pipeline -c {script_path}/{script_py[0]}"
-                        print(f'Run script in {script_path}')
-
-                        try:
-                            with open(script_py[0], "r") as file:
-                                lines = file.readlines()
-                                
-                            for i, line in enumerate(lines):
-                                if variable_name_to_modify in line:
-                                    if "DOSPLIT = False" in line:
-                                        lines[i] = f"{variable_name_to_modify} = {new_value}\n"
-                                    break
-                            
+                        for science_id in output:
+                            script_path = f'{member_path}/script'
+                            script_files = subprocess.run("ls", cwd=script_path, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                            script_files = script_files.stdout.decode()
+                            script_files = script_files.split('\n')
+                            script_files.pop()
+    
+                            xml_file = [file for file in script_files if version_xml in file]
+                            script_py = [file for file in script_files if pipeline in file]
+                            tree = ET.parse(f'{script_path}/{xml_file[0]}')
+                            root = tree.getroot()
+                            casaversion_element = root.find('.//casaversion')
+                            if casaversion_element is not None:
+                                casaversion = casaversion_element.get('name')
+                                print(f'CASA version: {casaversion}')
                             else:
-                                lines.insert(0, f"{variable_name_to_modify} = {new_value}\n")
+                                print('No found compatible version')
+                            version = casaversion.replace('.', '')[:3]
+                            pipeline_cmd = f"casa{version} --pipeline -c {script_path}/{script_py[0]}"
+                            print(f'Run script in {script_path}')
 
-                            with open(script_py[0], "w") as file:
-                                file.wirtelines(lines)
-                        except ImportError:
-                            print("Error: The script file could not be imported.")
+                            try:
+                                with open(f"{script_path}/{script_py[0]}", "r") as file:
+                                    lines = file.readlines()
 
-                        try:
-                            subprocess.call(['/bin/bash', '-i', '-c', pipeline_cmd], cwd=script_path)
-                        except subprocess.CalledProcessError as e:
-                            print(f"Error running command: {e}")
+                                for i, line in enumerate(lines):
+                                    if variable_name_to_modify in line:
+                                        if "DOSPLIT = False" == line:
+                                            lines[i] = f"{variable_name_to_modify} = {new_value}\n"
+                                            break
+                                        else:
+                                            lines.insert(0, f"{variable_name_to_modify} = {new_value}\n")
+                                            break
+
+                                with open(f"{script_path}/{script_py[0]}", "w") as file:
+                                    file.writelines(lines)
+                            except ImportError:
+                                print("Error: The script file could not be imported.")
+
+                            try:
+                                subprocess.call(['/bin/bash', '-i', '-c', pipeline_cmd], cwd=script_path)
+                            except subprocess.CalledProcessError as e:
+                                print(f"Error running command: {e}")
 
 
     def fitting(self):
