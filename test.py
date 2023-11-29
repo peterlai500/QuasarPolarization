@@ -13,7 +13,7 @@ storage = '/run/media/pinhsien/Storage24TB/DATA'
 
 result = QuasarPol(target, calibration, polarization, data_length)
 
-step = 3
+step = -1
 
 if step >= 0:
     data = result.get_tables()
