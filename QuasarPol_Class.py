@@ -164,24 +164,31 @@ class QuasarPol:
 
 
 
-    def filter_data(self, min_change_in_PA, Max_change_in_PA):
+    def filter_data(self, min_obs_date, Max_obs_date, min_change_in_PA, Max_change_in_PA):
         
         '''
         Filter the parallactic angle from self.get_ParaAngle by the change of PA.
         
         Parameters
         ----------
+        min_obs_date : string
+        Max_obs_date : string
+            format : "%d-%m-%Y"
+            Constrain the observation data after the date.
+
         min_change_in_PA : float or int (unit: degree)
-            The unit of parallactic angle (eg, degree) can be ignore.
+        Max_change_in_PA : float or int (unit: degree)
+            The unit of can be ignore.
         
         Returns
         -------
         Filtered data table
         
         '''
-        self.min_PA = min_change_in_PA
-        self.max_PA = Max_change_in_PA
-
+        self.min_PA   = min_change_in_PA
+        self.max_PA   = Max_change_in_PA
+        self.min_date = min_obs_date
+        self.max_date = Max_obs_date
         ParaAngle = self.get_ParaAngle()
 
         Init_PA     = []
@@ -192,10 +199,15 @@ class QuasarPol:
         proposal_id = []
         Uids        = []
         Group_id    = []
+
+        min_obs_date = datetime.strptime(min_obs_date, "%d-%m-%Y").date()
+        Max_obs_date = datetime.strptime(Max_obs_date, "%d-%m-%Y").date()
         
         for i in range(len(ParaAngle)):
-            if min_change_in_PA < ParaAngle['Change_PA'][i] / u.deg < Max_change_in_PA:
+            data_date = ParaAngle['Obs_date'][i]
+            data_date = datetime.strptime(data_date, "%d-%m-%Y").date()
 
+            if (min_change_in_PA < ParaAngle['Change_PA'][i] / u.deg < Max_change_in_PA) and (min_obs_date < data_date < Max_obs_date):
                 proposal_id.append(ParaAngle['proposal_id'][i])
                 Uids.append(ParaAngle['member_ous_uid'][i])
                 Group_id.append(ParaAngle['group_ous_uid'][i])
@@ -233,7 +245,7 @@ class QuasarPol:
         self.directory = save_directory
 
         if filtered is True:
-            PA_table = self.filter_data(self.min_PA, self.max_PA)
+            PA_table = self.filter_data(self.min_date, self.max_date, self.min_PA, self.max_PA)
         else:
              PA_table = self.get_ParaAngle()
         uids = np.unique(PA_table['member_ous_uid'])
@@ -366,8 +378,9 @@ class QuasarPol:
 
     def fitting(self):
         # Go into the calibrated direcrory
-        calibrated_dire = f'{self.data_path}/calibrated/working'
-        ms_files = subprocess.run('ls *.ms -d', cwd=calibrated_dire, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        calibrated_dire = f'{self.data_path}/calibrated/'
+        print(f"Looking for the calibrated files in the {calibrated_dire}")
+        ms_files = subprocess.run('ls *.ms.split.cal -d', cwd=calibrated_dire, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         ms_files = ms_files.stdout.decode()
         ms_files = ms_files.split('\n')
         ms_files.pop()
