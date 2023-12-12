@@ -207,7 +207,7 @@ class QuasarPol:
             data_date = ParaAngle['Obs_date'][i]
             data_date = datetime.strptime(data_date, "%d-%m-%Y").date()
 
-            if (min_change_in_PA < ParaAngle['Change_PA'][i] / u.deg < Max_change_in_PA or (min_change_in_PA < -ParaAngle['Change_PA'][i] / u.deg < Max_change_in_PA) and (min_obs_date < data_date < Max_obs_date):
+            if (min_change_in_PA < ParaAngle['Change_PA'][i] / u.deg < Max_change_in_PA or min_change_in_PA < -ParaAngle['Change_PA'][i] / u.deg < Max_change_in_PA) and (min_obs_date < data_date < Max_obs_date):
                 proposal_id.append(ParaAngle['proposal_id'][i])
                 Uids.append(ParaAngle['member_ous_uid'][i])
                 Group_id.append(ParaAngle['group_ous_uid'][i])
