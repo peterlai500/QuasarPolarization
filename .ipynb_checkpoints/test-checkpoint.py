@@ -6,16 +6,16 @@ target        = "J1924-2914"
 calibration   = False
 polarization  = "Dual"
 data_length   = 20000
-earliest_date = "10-02-2016"
-latest_date   = "01-04-2016"
-min_change    = 90
+earliest_date = "27-09-2022"
+latest_date   = "30-09-2023"
+min_change    = 60
 Max_change    = 180
 
 storage = '/run/media/pinhsien/Storage24TB/DATA'
 
 result = QuasarPol(target, calibration, polarization, data_length)
 
-step = 2
+step = 3
 
 if step >= 0:       # make sure the data is exist
     data = result.get_tables()
