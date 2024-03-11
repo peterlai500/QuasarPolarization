@@ -19,3 +19,13 @@ RUN wget https://casa.nrao.edu/download/distro/casa-pipeline/release/el7/casa-pi
     yum install freetype \ 		# libfreetype.so.6
     yum install libX11 \ 		# libX11.so.6
     yum install libXft \		# libXft.so.2
+    yum install xorg-x11-server-Xorg \	
+    yum install xorg-x11-xauth \
+    yum install xorg-x11-apps \
+    yum install xorg-x11-server-Xvfb \
+    yum install libXrandr \
+    yum install libXinerama \
+    yum install libnsl \
+
+
+
