@@ -26,6 +26,4 @@ RUN wget https://casa.nrao.edu/download/distro/casa-pipeline/release/el7/casa-pi
     yum install libXrandr \
     yum install libXinerama \
     yum install libnsl \
-
-
-
+    yum groupinstall 'development tool' \
