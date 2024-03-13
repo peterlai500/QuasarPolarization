@@ -4,8 +4,6 @@
 # using the CentOS 7-2009, which corresponding to RHEL 7.9
 FROM centos:7.9.2009
 
-MAINTAINER Pin-Hsien Lai
-
 # Updates and install libraries
 RUN yum update \
     yum install wget \
