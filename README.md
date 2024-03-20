@@ -23,7 +23,7 @@ Initialize the package:
 Run the below line in the environment installed require packages, and save the initialized result in the variable you like, for me it is the `result`, i.e.,  
 `result = QuasarPol(source, sci_obs, pol, table_length)`  
 
-- To visualize the practical effect, the [`sample.ipynb`](https://github.com/peterlai500/QuasarPolarization/blob/main/demo.ipynb) provides a more detailed demonstration.
+- To visualize the practical effect, the [`demo.ipynb`](https://github.com/peterlai500/QuasarPolarization/blob/main/demo.ipynb) provides a more detailed demonstration.
 
 ### For users who would like to do interactively. 
 Use the jupyter notebook for the following step.
