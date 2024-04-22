@@ -5,23 +5,21 @@
 FROM centos:7.9.2009
 
 # Updates and install libraries
-RUN yum update \
-    yum install wget \
-    yum install perl \
-    mkdir casa561
-
-WORKDIR /casa561
-
-RUN wget https://casa.nrao.edu/download/distro/casa-pipeline/release/el7/casa-pipeline-release-5.6.1-8.el7.tar.gz \
-    tar zxvf casa-pipeline-release-5.6.1-8.el7.tar.gz \
-    yum install freetype \ 		# libfreetype.so.6
-    yum install libX11 \ 		# libX11.so.6
-    yum install libXft \		# libXft.so.2
-    yum install xorg-x11-server-Xorg \	
-    yum install xorg-x11-xauth \
-    yum install xorg-x11-apps \
-    yum install xorg-x11-server-Xvfb \
-    yum install libXrandr \
-    yum install libXinerama \
-    yum install libnsl \
-    yum groupinstall 'development tool' \
+RUN yum -y update \
+    yum -y upgrade \
+    yum -y install curl \
+    yum -y install wget \ 
+    yum -y install perl \
+    yum -y install freetype \ 		
+    yum -y install libX11 \ 		
+    yum -y install libXft \		
+    yum -y install xorg-x11-server-Xorg \	
+    yum -y install xorg-x11-xauth \
+    yum -y install xorg-x11-apps \
+    yum -y install xorg-x11-server-Xvfb \
+    yum -y install libXrandr \
+    yum -y install libXinerama \
+    yum -y install libnsl \
+    yum -y groupinstall 'development tool'
+RUN curl -O https://casa.nrao.edu/download/distro/casa-pipeline/release/el7/casa-pipeline-release-5.6.1-8.el7.tar.gz
+RUN tar zxvf casa-pipeline-release-5.6.1-8.el7.tar.gz
