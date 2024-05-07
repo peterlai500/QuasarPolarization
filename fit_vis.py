@@ -5,6 +5,12 @@
 # import uvmultifit as uvm
 
 import numpy as np
+from datetime import datetime
+
+from astropy.time import Time
+from astropy.coordinates import SkyCoord
+from astropy import units as u
+
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
@@ -12,7 +18,7 @@ vis       = "/home/pinhsien/Research/Baobab_2016data/sgrastar_b8/calibrated.ms.1
 field_ids = [0, 18, 25, 94, 101, 133, 134]
 
 # use CASA ms tools to get columns of DATA, UVW, TIME, FIELD, UVdist, etc. 
-# All the information saved into d
+# All the information saved into d with a dict. 
 ms.open(vis)
 ms.select(
         {
@@ -22,7 +28,7 @@ ms.select(
 spw_info = ms.getspectralwindowinfo()
 nchan    = spw_info["0"]["NumChan"]
 npol     = spw_info["0"]["NumCorr"]
-d = ms.getdata(['data', 'antenna1', 'antenna2', 'field_id', 'time', 'weight', 'flag', 'uvdist'])
+d = ms.getdata(['data', 'antenna1', 'antenna2', 'field_id', 'time', 'weight','u', 'v', 'flag', 'uvdist'])
 ms.close()
 
 # use CASA table tool get the frequency
@@ -33,10 +39,17 @@ tb.close
 
 flags  = np.squeeze(d['flag'])
 data   = np.squeeze(d['data'])
+time   = d['time']
+uu     = d['u']
+vv     = d['v']
 ant1   = d['antenna1']
 ant2   = d['antenna2']
 weight = d['weight']
 uvdist = d['uvdist']
+
+'''
+
+'''
 
 if npol == 1:
     Re   = data.real
@@ -90,7 +103,7 @@ else:
     flags  = flags.any(axis=0)
     uvdist = uvdist.any(axis=0)
 
-# calculating the visibility
+# calculating the complex visibility
 data_real = np.squeeze(data_real)
 data_imag = np.squeeze(data_imag)
 data_VIS = data_real + data_imag*1.0j
@@ -109,7 +122,7 @@ XX_VIS   = XX_VIS[np.logical_not(flags)]
 YY_VIS   = YY_VIS[np.logical_not(flags)]
 uvdist   = uvdist[np.logical_not(flags)]
 
-Stokes_I = np.abs(data_VIS)**2
+Stokes_I = np.abs(data_VIS)
 XX = np.abs(XX_VIS)**2 
 YY = np.abs(YY_VIS)**2
 R_pol = (XX - YY)/Stokes_I
@@ -118,7 +131,7 @@ R_pol = (XX - YY)/Stokes_I
 '''
 # Fits Stokes-I
 def FIT_I(uvdist, A, B):
-    return A * np.sin(uvdist * B)
+    return A
 params, params_covariance = curve_fit(FIT_I, uvdist, Stokes_I)
 
 # Fits The real part
@@ -135,18 +148,27 @@ plt.ylabel("Flux Intensity (Jy)")
 plt.legend(loc='best')
 plt.show()
 '''
+
+def FIT_I(uvdist, A):
+    fit_i = [A] * len(uvdist)
+    return fit_i
+params, params_covariance = curve_fit(FIT_I, uvdist, Stokes_I)
+
+
 #####################################
 ############### Plots ###############
 
 plt.clf()
 plt.cla()
-plt.plot(uvdist, data_VIS.real, '.')        # Visibility real part to uvdist
-plt.plot(uvdist, data_VIS.imag, 'x')        # Visibility imaginary part to uvdist
-plt.plot(uvdist, Stokes_I, '+')             # Stokes I to UVdist
+# plt.plot(uvdist, data_VIS.real, '.')        # Visibility real part to uvdist
+# plt.plot(uvdist, data_VIS.imag, 'x')        # Visibility imaginary part to uvdist
+plt.plot(uvdist, Stokes_I, '.')            # Stokes I to UVdist
+plt.plot(uvdist, FIT_I(uvdist, params[0]))
+
 
 plt.xlabel("UVdist")
 plt.ylabel("Flux Intensity (Jy)")
-plt.legend(['Real part','Imaginary part','Stokes I'])
+plt.legend(['Stokes I', f'Fitted data={params[0]}'])
+plt.title('Stokes I - UV distance')
 plt.show()
-
-
+plt.savefig('I_uvdist.pdf')
