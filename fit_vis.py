@@ -1,9 +1,11 @@
 # 03/07
 
 # fitting script
+# Still need to fit field to each spw.
+
+
 
 # import uvmultifit as uvm
-
 import numpy as np
 from datetime import datetime
 
@@ -123,8 +125,8 @@ YY_VIS   = YY_VIS[np.logical_not(flags)]
 uvdist   = uvdist[np.logical_not(flags)]
 
 Stokes_I = np.abs(data_VIS)
-XX = np.abs(XX_VIS)**2 
-YY = np.abs(YY_VIS)**2
+XX = np.abs(XX_VIS) 
+YY = np.abs(YY_VIS)
 R_pol = (XX - YY)/Stokes_I
 
 
@@ -149,10 +151,10 @@ plt.legend(loc='best')
 plt.show()
 '''
 
-def FIT_I(uvdist, A):
-    fit_i = [A] * len(uvdist)
-    return fit_i
-params, params_covariance = curve_fit(FIT_I, uvdist, Stokes_I)
+#def FIT_I(uvdist, A):
+#    fit_i = [A] * len(uvdist)
+#    return fit_i
+#params, params_covariance = curve_fit(FIT_I, uvdist, Stokes_I)
 
 
 #####################################
@@ -162,13 +164,13 @@ plt.clf()
 plt.cla()
 # plt.plot(uvdist, data_VIS.real, '.')        # Visibility real part to uvdist
 # plt.plot(uvdist, data_VIS.imag, 'x')        # Visibility imaginary part to uvdist
-plt.plot(uvdist, Stokes_I, '.')            # Stokes I to UVdist
-plt.plot(uvdist, FIT_I(uvdist, params[0]))
-
+# plt.plot(uvdist, Stokes_I, '.')            # Stokes I to UVdist
+# plt.plot(uvdist, FIT_I(uvdist, params[0]))
+plt.plot(uvdist, XX-YY, '.')
 
 plt.xlabel("UVdist")
 plt.ylabel("Flux Intensity (Jy)")
-plt.legend(['Stokes I', f'Fitted data={params[0]}'])
-plt.title('Stokes I - UV distance')
+# plt.legend(['Stokes I', f'Fitted data={params[0]}'])
+plt.title('XX-YY vs UV distance field 0')
 plt.show()
-plt.savefig('I_uvdist.pdf')
+plt.savefig('XXmYY_uvdist-field0.pdf')
