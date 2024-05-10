@@ -127,6 +127,7 @@ uvdist   = uvdist[np.logical_not(flags)]
 Stokes_I = np.abs(data_VIS)
 XX = np.abs(XX_VIS) 
 YY = np.abs(YY_VIS)
+XXmYY = XX-YY
 R_pol = (XX - YY)/Stokes_I
 
 
@@ -151,6 +152,11 @@ plt.legend(loc='best')
 plt.show()
 '''
 
+def XXmYY_FITTING(uvdist, A):
+    fit_xxmyy = [A] * len(uvdist)
+    return fit_xxmyy
+params, params_covariance = curve_fit(XXmYY_FITTING, uvdist, XXmYY)
+
 #def FIT_I(uvdist, A):
 #    fit_i = [A] * len(uvdist)
 #    return fit_i
@@ -167,10 +173,10 @@ plt.cla()
 # plt.plot(uvdist, Stokes_I, '.')            # Stokes I to UVdist
 # plt.plot(uvdist, FIT_I(uvdist, params[0]))
 plt.plot(uvdist, XX-YY, '.')
-
+plt.plot(uvdist, XXmYY_FITTING(uvdist, params[0]))
 plt.xlabel("UVdist")
 plt.ylabel("Flux Intensity (Jy)")
-# plt.legend(['Stokes I', f'Fitted data={params[0]}'])
-plt.title('XX-YY vs UV distance field 0')
+plt.legend(['$XX-YY$', f'Fitted data={params[0]}'])
+plt.title('XX-YY vs UV distance fitting field 0')
 plt.show()
-plt.savefig('XXmYY_uvdist-field0.pdf')
+plt.savefig('XXmYY_uvdist-fitting_field0.pdf')
