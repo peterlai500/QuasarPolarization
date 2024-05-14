@@ -1,12 +1,13 @@
 import os
 import numpy as np
+import matplotlib.pyplot as plt
+from statistics import mean
 from scipy.optimize import curve_fit
-
 
 vis = "sgrastar_b8/calibrated.ms.12m.uvaver"
 field_ids = [0, 18, 25, 94, 101, 133, 134]
 
-def fit_I(vis, field):
+def fit_I(visibility, field):
     # All the information saved into d with a dict
     fitted_I = {"spw":{}}
     
@@ -17,17 +18,17 @@ def fit_I(vis, field):
     if "fitting_result" not in l:
         os.system("mkdir fitting_result")
     
-    name = vis.replace("/", ".")
+    name = visibility.replace("/", ".")
     
     # read the ms and use the uvmodelfit in CASA
     for f in field:
-        ms.open(vis)
+        ms.open(visibility)
         ms.select({'field_id':f})
         spw_info = ms.getspectralwindowinfo()
         for s in range(len(spw_info)):
             # Use uvmodelfit to fit the Stokes I
             uvmodelfit(
-                    vis, 
+                    visibility, 
                     field=f'{f}', 
                     spw=f'{s}', 
                     niter=10, 
@@ -48,11 +49,11 @@ def XXmYY_FITTING(uvdist, A):
     fit_xxmyy = [A] * len(uvdist)
     return fit_xxmyy
 
-def fit_XXmYY(vis, field):
+def fit_XXmYY(visibility, field):
     fitted_XXmYY = {"spw":{}}
     for f in field:
         print('field:', f)
-        ms.open(vis)
+        ms.open(visibility)
         ms.select({'field_id':f})
         spw_info = ms.getspectralwindowinfo()
         for s in range(len(spw_info)):
@@ -125,21 +126,78 @@ def fit_XXmYY(vis, field):
     return fitted_XXmYY
 
 
-def get_ParAngle():
-    pass
+def get_ParAngle(visibility, field):
+    ParAngle = {'spw':{}}
+    
+    # make a directory to save the ascii file from the plotms
+    l = subprocess.run("ls", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    l = l.stdout.decode()
+    l = l.split('\n')
+    if "plotms_result" not in l:
+        os.system("mkdir plotms_result")
 
-def calc_PolRatio(StokesI, XXmYY):
-    R = {"spw":{}}
-    for s in range(len(StokesI["spw"])):
-        print("spectral window:"s)
+    name = visibility.replace("/", ".")
+    
+    # Read the spectral window info from ms
+    for f in field:
+        ms.open(visibility)
+        ms.select({'field_id':f})
+        spw_info = ms.getspectralwindowinfo()
+        for s in range(len(spw_info)):
+            parangle = []
+            # use plotms to get and the information of ParAngle
+            # and export the result to ASCII format
+            plotms(
+                visibility,
+                xaxis='Time',
+                yaxis='ParAngle',
+                selectdata=True,
+                field=f'{f}',
+                spw=f'{s}',
+                plotfile=f'plotms_result/{name}.plot.field{f}.spw{s}.txt'
+                )
+            # read the ascii file to and obtain the averaging ParAngle of each integration
+            txtfile  = open(f'plotms_result/{name}.plot.field{f}.spw{s}.txt', 'r')
+            for line in txtfile:
+                line = line.strip()
+                datacol = line.split()
+                if len(datacol) == 14:
+                    parangle.append(datacol[1])
+            
+            parangle = [float(num) for num in parangle]
+            if s not in ParAngle['spw']:
+                ParAngle['spw'][s] = []
+            ParAngle['spw'][s].append(mean(parangle))
+        ms.close()
+    return ParAngle
 
-        
+def Rpol_PA_FITTING(Parallactic_Angle, a, b, c):
+    return a * np.sin(b * Parallactic_Angle) + c
 
-        if s not in R["spw"]:
-            R["spw"][s] = []
-        R["spw"][s].append(fit['flux']['value'][0])
 
-    pass
+def fit_Pol_PA(fitted_I, fitted_XXmYY, ParAngle):
+    # check the length (field) is the same
+    if len(fitted_I) != len(fitted_XXmYY) != len(ParaAngle):
+        return 
+    # calculate the polarization ratio (XX-YY)/I 
+    Rpol = {'spw':{}}
+    for i in range(len(fitted_I['spw'])):
+        if i not in Rpol:
+            Rpol['spw'][i] = []
+        Rpol['spw'][i] = [x / y for x, y in zip(testI, testXXmYY)]
+    fit_params = {'spw':{}}
+    fit_covari = {'spw':{}}
+    for s in range(len(Rpol['spw']):
+        # fit the polarization ratio to parallactic angle
+        params, params_covariance = curve_fit(Rpol_PA_FITTING, ParAngle['spw'][s], Rpol['spw'][s])
 
-FitStokeI = fit_I(vis, field_ids)
-FitXXmYY = fit_XXmYY(vis, field_ids)
+
+
+
+
+
+
+
+# FitStokeI     = fit_I(vis, field_ids)
+# FitXXmYY      = fit_XXmYY(vis, field_ids)
+ParAngle_list = get_ParAngle(vis, field_ids)
