@@ -1,11 +1,17 @@
-import os
+import os   
 import numpy as np
 import matplotlib.pyplot as plt
 from statistics import mean
 from scipy.optimize import curve_fit
 
+from astropy.coordinates import Angle
+from astropy import units as u
+
 vis = "sgrastar_b8/calibrated.ms.12m.uvaver"
 field_ids = [0, 18, 25, 94, 101, 133, 134]
+
+def StokeI_FITTING():
+    return 
 
 def fit_I(visibility, field):
     # All the information saved into d with a dict
@@ -19,7 +25,6 @@ def fit_I(visibility, field):
         os.system("mkdir fitting_result")
     
     name = visibility.replace("/", ".")
-    
     # read the ms and use the uvmodelfit in CASA
     for f in field:
         ms.open(visibility)
@@ -27,6 +32,7 @@ def fit_I(visibility, field):
         spw_info = ms.getspectralwindowinfo()
         for s in range(len(spw_info)):
             # Use uvmodelfit to fit the Stokes I
+            ##  use the field 0 fitting result to initial the flux fitting 
             uvmodelfit(
                     visibility, 
                     field=f'{f}', 
@@ -126,7 +132,8 @@ def fit_XXmYY(visibility, field):
     return fitted_XXmYY
 
 
-def get_ParAngle(visibility, field):
+def get_ParAngle(visibility, field):    
+
     ParAngle = {'spw':{}}
     
     # make a directory to save the ascii file from the plotms
@@ -169,35 +176,58 @@ def get_ParAngle(visibility, field):
                 ParAngle['spw'][s] = []
             ParAngle['spw'][s].append(mean(parangle))
         ms.close()
+
+    # Convert the parallactic angle in astropy angle object and wrap the angle between -180 to 180 degree
+    for i in range(len(ParAngle['spw'])):
+        ParAngle['spw'][i] = Angle(ParAngle['spw'][i] * u.deg)
+        ParAngle['spw'][i].wrap_at('180d', inplace=True)
     return ParAngle
 
-def Rpol_PA_FITTING(Parallactic_Angle, a, b, c):
-    return a * np.sin(b * Parallactic_Angle) + c
+def Rpol_PA_FITTING(Parallactic_Angle, P, a, c):
+    '''
+    P: the polarization percentage
+    a: (polarization position angle in the sky frame) - (E-vector)
+    
+    return the function model for the polarization ratio to the parallactic angle
+    '''
+    return P * np.cos(2 * (a - np.array(Parallactic_Angle))) + c
 
 
 def fit_Pol_PA(fitted_I, fitted_XXmYY, ParAngle):
-    # check the length (field) is the same
+    '''
+    fitted_I: dict
+        I: int
+    fitted_XXmYY: dict
+        XX-YY: integer
+    ParAngle: dict
+        Parallactic angles are the astropy object in the dictionary
+    '''
+    # check the length (number of field) is the same
     if len(fitted_I) != len(fitted_XXmYY) != len(ParaAngle):
         return 
     # calculate the polarization ratio (XX-YY)/I 
     Rpol = {'spw':{}}
-    for i in range(len(fitted_I['spw'])):
-        if i not in Rpol:
-            Rpol['spw'][i] = []
-        Rpol['spw'][i] = [x / y for x, y in zip(testI, testXXmYY)]
     fit_params = {'spw':{}}
     fit_covari = {'spw':{}}
-    for s in range(len(Rpol['spw']):
-        # fit the polarization ratio to parallactic angle
-        params, params_covariance = curve_fit(Rpol_PA_FITTING, ParAngle['spw'][s], Rpol['spw'][s])
+    for i in range(len(fitted_I['spw'])):
+        if all(i not in d for d in [Rpol['spw'], fit_params['spw'], fit_covari['spw']]):
+            Rpol['spw'][i] = []
+            fit_params['spw'][i] = []
+            fit_covari['spw'][i] = []
+        # Calculate the polarization ratio (XX-YY)/I
+        Rpol['spw'][i] = [x / y for x, y in zip(fitted_I['spw'][i], fitted_XXmYY['spw'][i])]
+        
+        #  Fit the polarization ratio to the parallactic angle
+        params, params_covariance = curve_fit(Rpol_PA_FITTING, ParAngle['spw'][i].rad, Rpol['spw'][i])
+        
+        fit_params['spw'][i] = params
+        fit_covari['spw'][i] = params_covariance
+    return Rpol, fit_params, fit_covari
 
 
 
-
-
-
-
-
-# FitStokeI     = fit_I(vis, field_ids)
-# FitXXmYY      = fit_XXmYY(vis, field_ids)
+FitStokeI     = fit_I(vis, field_ids)
+FitXXmYY      = fit_XXmYY(vis, field_ids)
 ParAngle_list = get_ParAngle(vis, field_ids)
+
+test = fit_Pol_PA(FitStokeI, FitXXmYY, ParAngle_list)
