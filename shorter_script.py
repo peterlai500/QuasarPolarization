@@ -4,11 +4,12 @@ import matplotlib.pyplot as plt
 from statistics import mean
 from scipy.optimize import curve_fit
 
-from astropy.coordinates import Angle
+from astropy.coordinates import Angle, SkyCoord
 from astropy import units as u
 
 vis = "sgrastar_b8/calibrated.ms.12m.uvaver"
 field_ids = [0, 18, 25, 94, 101, 133, 134]
+
 
 def PointSource_FITTING(uvdist, A):
     fitting = [A] * len(uvdist)
@@ -99,6 +100,7 @@ def XXYY_DATA(visibility, field):
 
     return XX_data, YY_data, uvdist
 
+
 def Fit_I(XXYYdata):
     XX = XXYYdata[0]
     YY = XXYYdata[1]
@@ -125,10 +127,6 @@ def Fit_I(XXYYdata):
 
     return StokesI, FittedI
 
-
-
-
-'''
 def fit_I(visibility, field):
     fitted_I = {"spw":{}}
     
@@ -136,26 +134,56 @@ def fit_I(visibility, field):
     l = subprocess.run("ls", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     l = l.stdout.decode()
     l = l.split('\n')
-    if "fitting_result" not in l:
-        os.system("mkdir fitting_result")
     
     name = visibility.replace("/", ".")
+
+    if "fitting_result" not in l:
+        os.system("mkdir fitting_result")
+    else:
+        os.system(f"rm -rf fitting_result/{name}*")
+    
     # read the ms and use the uvmodelfit in CASA
     for f in field:
         ms.open(visibility)
         ms.select({'field_id':f})
         spw_info = ms.getspectralwindowinfo()
+        ms.close()
         for s in range(len(spw_info)):
             # Use uvmodelfit to fit the Stokes I
-            ##  use the field 0 fitting result to initial the flux fitting 
+            ##  use the field 0 fitting result to initial the flux fitting
+            listobs(
+                    visibility,
+                    field    = str(f),
+                    spw      = str(s),
+                    verbose  = False,
+                    listfile = f'fitting_result/{name}.list.field{f}.spw{s}.out'
+                    )
+
+            readlistobs = open(f'fitting_result/{name}.list.field{f}.spw{s}.out')
+            for line in readlistobs: 
+                line = line.strip() 
+                datacol = line.split() 
+                if len(datacol) == 8 and datacol[0] != 'ID': 
+                    source  = datacol[2]
+                    obs_RA  = datacol[3] 
+                    obs_DEC = datacol[4]
+            source = source.replace("_star", "*")
+            target = SkyCoord.from_name(source)
+            ra     = Angle(obs_RA, unit=u.hourangle)
+            dec    = Angle(obs_DEC.replace('.', ':', 2), unit=u.deg)
+
+            dx = target.ra.dms.s - ra.dms.s
+            dy = target.dec.dms.s - dec.dms.s
+
             uvmodelfit(
                     visibility, 
-                    field=f'{f}', 
-                    spw=f'{s}', 
-                    niter=10, 
-                    comptype='P', 
-                    sourcepar=[1.0, 0.0, 0.0], 
-                    outfile=f'fitting_result/{name}.fit.field{f}.spw{s}.cl'
+                    field     = str(f), 
+                    spw       = str(s), 
+                    niter     = 30, 
+                    comptype  = 'P', 
+                    sourcepar = [1.0, dx, dy], 
+                    varypar   = [True, False, False],
+                    outfile   = f'fitting_result/{name}.fit.field{f}.spw{s}.cl'
                     )
             cl.open(f'fitting_result/{name}.fit.field{f}.spw{s}.cl')
             fit = cl.getcomponent(0)
@@ -163,9 +191,8 @@ def fit_I(visibility, field):
             if s not in fitted_I["spw"]:
                 fitted_I["spw"][s] = []
             fitted_I["spw"][s].append(fit['flux']['value'][0])
-        ms.close()
     return fitted_I
-'''
+
 def XXmYY_FITTING(uvdist, A):
     fit_xxmyy = [A] * len(uvdist)
     return fit_xxmyy
@@ -340,11 +367,21 @@ def fit_Pol_PA(fitted_I, fitted_XXmYY, ParAngle):
     return Rpol, fit_params, fit_covari
 
 
-XXYY = XXYY_DATA(vis, field_ids)
-Stokes_I = Fitting(XXYY)
+# XXYY = XXYY_DATA(vis, field_ids)
+# Stokes_I = Fitting(XXYY)
 
-# FitStokeI     = fit_I(vis, field_ids)
-# FitXXmYY      = fit_XXmYY(vis, field_ids)
-# ParAngle_list = get_ParAngle(vis, field_ids)
+FitStokeI     = fit_I(vis, field_ids)
+FitXXmYY      = fit_XXmYY(vis, field_ids)
+ParAngle_list = get_ParAngle(vis, field_ids)
 
-# test = fit_Pol_PA(FitStokeI, FitXXmYY, ParAngle_list)
+test = fit_Pol_PA(FitStokeI, FitXXmYY, ParAngle_list)
+
+pa = np.linespace(-0.5*np.pi, 0.5*np.pi, 360)
+
+plt.cla()
+plt.plot(ParAngle_list['spw'][0].rad, test[0]['spw'][0], '.')
+plt.plot(pa, Rpol_PA_FITTING(pa, test[1]['spw'][0][0], test[1]['spw'][0][1], test[1]['spw'][0][2]))
+plt.xlabel("Parallactic Angle (deg)")
+plt.ylabel(r"$\frac{XX-YY}{I}$")
+plt.show()
+plt.savefig("images/Rpol-PA_fitting_spw0.0520.pdf")
