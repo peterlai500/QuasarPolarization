@@ -17,7 +17,8 @@ def PointSource_FITTING(uvdist, A):
 def read_DATA(visibility, field):
     XX_data = {"spw":{}}
     YY_data = {"spw":{}}
-
+    UVdist  = {"spw":{}}
+    data_dict = []
     for f in field:
         ms.open(visibility)
         ms.select({
@@ -51,79 +52,185 @@ def read_DATA(visibility, field):
             re_yy = data[1,:].real
             im_yy = data[1,:].imag
 
-            weight_xx = weight[0,:]
-            weight_yy = weight[1,:]
-
             flags = flags[0,:] * flags[1,:]
-
-            # - weighted averages
-            with np.errstate(divide='ignore', invalid='ignore'):
-                Re_xx = np.where(weight_xx != 0, re_xx * weight_xx, 0.)
-                Im_xx = np.where(weight_xx != 0, im_xx * weight_xx, 0.)
-                Re_yy = np.where(weight_yy != 0, re_yy * weight_yy, 0.)
-                Im_yy = np.where(weight_yy != 0, im_yy * weight_yy, 0.)
-            wgts = (weight_xx + weight_yy)
-
+             
             # toss out the autocorrelation placeholders
             xc = np.where(ant1 != ant2)[0]
-            Re_xx  = Re_xx[np.newaxis, xc]
-            Im_xx  = Im_xx[np.newaxis, xc]
-            Re_yy  = Re_yy[np.newaxis, xc]
-            Im_yy  = Im_yy[np.newaxis, xc]
+
+            Re_xx  = re_xx[np.newaxis, xc]
+            Im_xx  = im_xx[np.newaxis, xc]
+            Re_yy  = re_yy[np.newaxis, xc]
+            Im_yy  = im_yy[np.newaxis, xc]
+            uvdist = uvdist[xc] 
             flags  = flags[xc]
-            uvdist = uvdist[xc]
 
             Re_xx  = np.squeeze(Re_xx)
             Im_xx  = np.squeeze(Im_xx)
-            XX_VIS = Re_xx + Im_xx*1.0j
-
-            Re_yy = np.squeeze(Re_yy)
+            Re_yy  = np.squeeze(Re_yy)
             Im_yy  = np.squeeze(Im_yy)
-            YY_VIS = Re_yy + Im_yy*1.0j
-
+            
             # Remove the flagged data
-            XX_VIS   = XX_VIS[np.logical_not(flags)]
-            YY_VIS   = YY_VIS[np.logical_not(flags)]
-            uvdist   = uvdist[np.logical_not(flags)]
+            Re_xx  = Re_xx[np.logical_not(flags)]
+            Im_xx  = Im_xx[np.logical_not(flags)]
+            Re_yy  = Re_yy[np.logical_not(flags)]
+            Im_yy  = Im_yy[np.logical_not(flags)]
+            uvdist = uvdist[np.logical_not(flags)]
+            
+            # Combining Real part and Imag part
+            XX_VIS = Re_xx + Im_xx*1.0j
+            YY_VIS = Re_yy + Im_yy*1.0j
+            print(f"Flux amplitude: XX = {np.mean(abs(XX_VIS))}\tYY = {np.mean(abs(YY_VIS))}\n")
+            data_dict = [XX_data, YY_data, UVdist]
+            for data in data_dict:
+                if s not in data['spw']:
+                    data['spw'][s] = []
+            data_dict[0]['spw'][s].append(XX_VIS)
+            data_dict[1]['spw'][s].append(YY_VIS)
+            data_dict[2]['spw'][s].append(uvdist)
 
-            # Calculate the amplitude
-            XX = np.abs(XX_VIS)
-            YY = np.abs(YY_VIS)
+    return data_dict
 
-            if s not in XX_data['spw']:
-                XX_data['spw'][s] = []
-            if s not in YY_data['spw']:
-                YY_data['spw'][s] = []
-            XX_data['spw'][s].append(XX)
-            YY_data['spw'][s].append(YY)
 
-    return XX_data, YY_data, uvdist
 
 def Fit_I(XXYYdata):
-    XX = XXYYdata[0]
-    YY = XXYYdata[1]
+    XX     = XXYYdata[0]
+    YY     = XXYYdata[1]
     uvdist = XXYYdata[2]
 
     StokesI = {'spw':{}}
     FittedI = {'spw':{}}
+
     # Stokes I = (XX + YY)/2
     for spw in range(len(XX['spw'])):
         for i in range(len(XX['spw'][spw])):
-            stokes_i = ( XX['spw'][spw][i] + YY['spw'][spw][i] ) / 2
-
+            stokes_i = abs( XX['spw'][spw][i] + YY['spw'][spw][i] ) / 2
             if spw not in StokesI['spw']:
                 StokesI['spw'][spw] = []
+            
             StokesI['spw'][spw].append(stokes_i)
-
-    for spw in range(len(StokesI['spw'])):
-        for i in range(len(StokesI['spw'][spw])):
-            params, params_covariance = curve_fit(PointSource_FITTING, uvdist, StokesI['spw'][spw][i])
-
-            if spw not in StokesI['spw']:
-                Fitted_I['spw'][spw] = []
+            print(f'Fitting field {i} spw {spw} Stokes I')
+            params, params_covariance = curve_fit(PointSource_FITTING, uvdist['spw'][spw][i], StokesI['spw'][spw][i])
+            print(f'result: I = {params[0]}\n')
+            if spw not in FittedI['spw']:
+                FittedI['spw'][spw] = []
             FittedI['spw'][spw].append(params[0])
 
     return StokesI, FittedI
 
-data = read_DATA(vis, field_ids)
-# I = Fit_I(data)
+def FitRpol(XXYYdata, StokesI):
+    XX       = XXYYdata[0]
+    YY       = XXYYdata[1]
+    uvdist   = XXYYdata[2]
+    stokes_i = StokesI[1]
+    
+    Rpol    = {'spw':{}}
+    fitRpol = {'spw':{}}
+    
+    for spw in range(len(XX['spw'])):
+        for i in range(len(XX['spw'][spw])):
+            stokes_i = (XX['spw'][spw][i] + YY['spw'][spw][i]) / 2
+            XXmYY    = XX['spw'][spw][i] - YY['spw'][spw][i]
+            rpol     = (XXmYY / stokes_i)
+            if spw not in Rpol['spw']:
+                Rpol['spw'][spw] = []
+            Rpol['spw'][spw].append(rpol)
+            print(f'Fitting (XX-YY)/I field {i} spw {spw}') 
+            params, params_covariance = curve_fit(PointSource_FITTING, uvdist['spw'][spw][i], rpol)
+            print(f'result: (XX-YY)/I = {params[0]}')
+            if spw not in fitRpol['spw']:
+                fitRpol['spw'][spw] = []
+            fitRpol['spw'][spw].append(params[0])
+    return Rpol, fitRpol
+
+def get_ParAngle(visibility, field):
+
+    ParAngle = {'spw':{}}
+
+    # make a directory to save the ascii file from the plotms
+    l = subprocess.run("ls", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    l = l.stdout.decode()
+    l = l.split('\n')
+
+    name = visibility.replace("/", ".")
+
+    if "plotms_result" not in l:
+        os.system("mkdir plotms_result")
+    else:
+        os.system(f"rm -rf plotms_result/{name}*")
+
+    # Read the spectral window info from ms
+    for f in field:
+        ms.open(visibility)
+        ms.select({'field_id':f})
+        spw_info = ms.getspectralwindowinfo()
+        ms.close()
+        for s in range(len(spw_info)):
+            parangle = []
+            # use plotms to get and the information of ParAngle
+            # and export the result to ASCII format
+            plotms(
+                visibility,
+                xaxis      = 'Time',
+                yaxis      = 'ParAngle',
+                selectdata = True,
+                field      = str(f),
+                spw        = str(s),
+                plotfile   = f'plotms_result/{name}.plot.field{f}.spw{s}.txt'
+                )
+            # read the ascii file to and obtain the averaging ParAngle of each integration
+            txtfile  = open(f'plotms_result/{name}.plot.field{f}.spw{s}.txt', 'r')
+            for line in txtfile:
+                line = line.strip()
+                datacol = line.split()
+                if len(datacol) == 14:
+                    parangle.append(datacol[1])
+
+            parangle = [float(num) for num in parangle]
+            if s not in ParAngle['spw']:
+                ParAngle['spw'][s] = []
+            ParAngle['spw'][s].append(mean(parangle))
+
+    # Convert the parallactic angle in astropy angle object and wrap the angle between -180 to 180 degree
+    for i in range(len(ParAngle['spw'])):
+        ParAngle['spw'][i] = Angle(ParAngle['spw'][i] * u.deg)
+        ParAngle['spw'][i].wrap_at('180d', inplace=True)
+
+    return ParAngle
+def Rpol_PA_FITTING(Parallactic_Angle, P, a, c):
+    '''
+    P: the polarization percentage
+    a: (polarization position angle in the sky frame) - (E-vector)
+
+    return the function model for the polarization ratio to the parallactic angle
+    '''
+    return P * np.cos(2 * (a - np.array(Parallactic_Angle))) + c
+
+def Fit_RpolPA(Rpol, ParAngle):
+    rpol = Rpol[1]
+    pa   = ParAngle
+    if len(rpol) != len(pa):
+        return
+    fit_params = {'spw':{}}
+    fit_covari = {'spw':{}}
+    for spw_id in range(len(rpol['spw'])):
+        if all(spw_id not in d for d in [fit_params['spw'], fit_covari['spw']]):
+            fit_params['spw'][spw_id] = []
+            fit_covari['spw'][spw_id] = []
+
+        print(f'Curve fitting (XX-YY)/I for spw {spw_id}\n')
+        params, params_covariance = curve_fit(Rpol_PA_FITTING, pa['spw'][spw_id].rad, rpol['spw'][spw_id])
+
+        fit_params['spw'][spw_id] = params
+        fit_covari['spw'][spw_id] = params_covariance
+    return fit_params, fit_covari
+
+vis = "sgrastar_b8/calibrated.ms.12m.uvaver"
+field_ids = [0, 18, 25, 94, 101, 133, 134]
+
+data          = read_DATA(vis, field_ids)
+I             = Fit_I(data)
+rpol          = FitRpol(data, I)
+ParAngle_list = get_ParAngle(vis, field_ids)
+RpolPA        = Fit_RpolPA(rpol, ParAngle_list)
+
+
