@@ -10,6 +10,22 @@ from astropy import units as u
 vis = "sgrastar_b8/calibrated.ms.12m.uvaver"
 field_ids = [0, 18, 25, 94, 101, 133, 134]
 
+def ChanAverage(visibility):
+    ms.open(visibility)
+    spw_info = ms.getspectralwindowinfo()
+    ms.close()
+
+    if spw_info['0']['NumChan'] != 1:
+        mstransform(
+                vis         = visibility,
+                outputvis   = f"{vis}.chanaver",
+                chanaverage = True,
+                chanbin     = spw_info['0']['NumChan']
+                )
+        outputvis   = f"{vis}.chanaver"
+    return outputvis
+
+
 def PointSource_FITTING(uvdist, A):
     fitting = [A] * len(uvdist)
     return fitting
@@ -142,6 +158,7 @@ def FitRpol(XXYYdata, StokesI):
             fitRpol['spw'][spw].append(params[0])
     return Rpol, fitRpol
 
+
 def get_ParAngle(visibility, field):
 
     ParAngle = {'spw':{}}
@@ -196,6 +213,8 @@ def get_ParAngle(visibility, field):
         ParAngle['spw'][i].wrap_at('180d', inplace=True)
 
     return ParAngle
+
+
 def Rpol_PA_FITTING(Parallactic_Angle, P, a, c):
     '''
     P: the polarization percentage
@@ -224,13 +243,38 @@ def Fit_RpolPA(Rpol, ParAngle):
         fit_covari['spw'][spw_id] = params_covariance
     return fit_params, fit_covari
 
+def plot_fitting(Rpol, ParAngle, Fitting, save=True):
+    rpol   = Rpol[1]
+    PA     = ParAngle
+    params = Fitting[0]
+
+    l = subprocess.run("ls", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    l = l.stdout.decode()
+    l = l.split('\n')
+
+    if "images" not in l:
+        os.system("mkdir images")
+    
+    pa = np.linspace(-0.5*np.pi, 0.5*np.pi, 360)
+    for spw in range(len(rpol['spw'])):
+        plt.clf()
+        plt.cla()
+        plt.plot(PA['spw'][spw].rad, rpol['spw'][spw], '.')
+        plt.plot(pa, Rpol_PA_FITTING(pa, params['spw'][spw][0], params['spw'][spw][1], params['spw'][spw][2]))
+        plt.xlabel('Parallactic Angle (rad)')
+        plt.ylabel(r'$\frac{XX-YY}{I}$')
+#       plt.title(r'$\frac{XX-YY}{I}$ vs ParAngle at spw {}'.format(spw))
+        plt.legend(["data","model"])
+        plt.show()
+        if save == True:
+            plt.savefig(f'images/Rpol-PA_fitting_spw{spw}.pdf')
+
 vis = "sgrastar_b8/calibrated.ms.12m.uvaver"
 field_ids = [0, 18, 25, 94, 101, 133, 134]
 
-data          = read_DATA(vis, field_ids)
-I             = Fit_I(data)
-rpol          = FitRpol(data, I)
+XXYYdata      = read_DATA(vis, field_ids)
+StokesI       = Fit_I(XXYYdata)
+Rpol          = FitRpol(XXYYdata, StokesI)
 ParAngle_list = get_ParAngle(vis, field_ids)
-RpolPA        = Fit_RpolPA(rpol, ParAngle_list)
-
-
+Fitting       = Fit_RpolPA(Rpol, ParAngle_list)
+plot_fitting(Rpol, ParAngle_list, Fitting, save=True)
