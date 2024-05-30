@@ -1,10 +1,7 @@
-# QuasarPol Package
+# QuasarPol
 
-## Goal
-To charactorized the properties of accretion gas steam around even horizon by massively systemically downloading, calibrating, and doing fitting to proper quasar.
-
-## Obtaining
-Can directly obtain the source code and notebook file from GitHub with the `git clone` command.
+## Introduction
+For the purpose of constraining the magnetic field configuration around the event horizon, we developed this project. It enable us to extensively query and download historical ALMA calibrators with the desired correlations for analysis. Additionally fitting code provides a guide to analysis the parallel-hand correlation and parallactic angle of understanding polarization properties.
 
 ## Environment requirements
 Most of the necessary packages can be installed through the [`Quasarpol.yml`](https://github.com/peterlai500/QuasarPolarization/blob/main/Quasarpol.yml) file.  
@@ -12,40 +9,31 @@ By running in bash:
 `conda env create -f Quasarpol.yml `
 
 - astropy(>=4.2.1)
-
 - astroquery(v0.4.7.dev8738)  
   Common use install:  
   `python -m pip install -U --pre astroquery`  
   Installing all the mandatory and optional dependencies in astroquery by adding `[all]`:  
   `python -m pip install -U --pre astroquery[all]`
-## Instructions
-Initialize the package:  
-Run the below line in the environment installed require packages, and save the initialized result in the variable you like, for me it is the `result`, i.e.,  
-`result = QuasarPol(source, sci_obs, pol, table_length)`  
+- Docker  
+  The required images are in the docker\_env.
+- CASA 6.4.1
+  For stablely executing the fitting code.
 
-- To visualize the practical effect, the [`demo.ipynb`](https://github.com/peterlai500/QuasarPolarization/blob/main/demo.ipynb) provides a more detailed demonstration.
+## Query and Download
+Run the functions in the `demo.ipynb` notebook in order. This will generate a table of quasars in the data archive that satisfy our desired conditions.  
+Alternatively, we can directly obtain the table and download the data by running `script\_template.py` or other script based on it usign Python.
 
-### For users who would like to do interactively. 
-Use the jupyter notebook for the following step.
-1. Check the data using `result.get_table()`. 
+## Calibration
+The most recommended method for now is utilizing the provided Docker image tarball to build containers set up for each ALMA  data cycle. Next, mount the downloaded data to the corresponfing container. By entering the container, you can directly execute the calibration pipeline script as usual.  
+Note that one container can only process one task. It is fine to build more than one container for multitask.
 
-2. Check the parallactic angle change for each observation using `result.get_ParaAngle()`.
+## Analyze Calibtated Measurement Set
+We can execute the [fitting.py](https://github.com/peterlai500/QuasarPolarization/blob/main/fitting.py) in the CASA 6.4.1 stable environment.  
+One can get the $XX$, $YY$, Stokes I, parallactic angle, and running fitting result step by step.Alternatively, we can exexcute the scripy  directly.
 
-3. Filter the data in a certain parallactic angle change range using  
-`filter_data(min_change_in_PA, Max_change_in_PA)`.
-It is OK to directly replace the `min_change_in_PA` and `Max_change_in_PA` into the lower bound and upper bound you would like to be.
+The value of E-vector differs depends on the observation band. The E-vector in the fitting script has been set to 0.0 for band 8 observations. Refer to Table 2. of [Liu et al. 2016](https://ui.adsabs.harvard.edu/abs/2016A%26A...593A.107L/abstract) for the values for other bands.
 
-5. Downloading and untaring data is quite simple. If you want to download the filtered data you just run:  
-`download_path = path/to/your/storage`  
-`result.download(filtered=True, save_directory=download_path)`  
-`result.untar()`
-6. Running calibration script can be achieved just by running  
-`result.run_script()`
+## Flowcharts for This Project
 
-### For advanced users
-It is totally fine to do the upper tasks with Python scripts.  
-The [`script_template.py`](https://github.com/peterlai500/QuasarPolarization/blob/main/script_template.py) in the repository can be regarded as the reference for composing a python script.
-
-## Caution
-1. Running CASA pipeline script may cause some systemic errors, such as the OS's in-built library not being compatible with CASA versions and you may need to manually downgrade the libraries. Suggest process the data after 2021-05-10, that the data compatible version in CASA 6.x.x
-2. The parallactic angle is calculated using the observation time of the entire observation. The result is highly incorrect regarding the coverage as the target you want to analysis.
+## Issues
+The parallactic angle is calculated using the observation time of the entire observation. The result is highly incorrect regarding the coverage as the target you want to analysis.

@@ -35,6 +35,16 @@ def read_DATA(visibility, field):
     YY_data = {"spw":{}}
     UVdist  = {"spw":{}}
     data_dict = []
+    
+    if isinstance(field, list):
+        print("Get XX & YY for field", field)
+    else:
+        ms.open(visibility)
+        info = ms.summary()
+        ms.close()
+        field = range(info['nfields'])
+    print("Total field number:", len(field), '\n')
+
     for f in field:
         ms.open(visibility)
         ms.select({
@@ -77,29 +87,31 @@ def read_DATA(visibility, field):
             Im_xx  = im_xx[np.newaxis, xc]
             Re_yy  = re_yy[np.newaxis, xc]
             Im_yy  = im_yy[np.newaxis, xc]
-            uvdist = uvdist[xc] 
+            uvdist = uvdist[xc]
             flags  = flags[xc]
 
             Re_xx  = np.squeeze(Re_xx)
             Im_xx  = np.squeeze(Im_xx)
             Re_yy  = np.squeeze(Re_yy)
             Im_yy  = np.squeeze(Im_yy)
-            
+
             # Remove the flagged data
             Re_xx  = Re_xx[np.logical_not(flags)]
             Im_xx  = Im_xx[np.logical_not(flags)]
             Re_yy  = Re_yy[np.logical_not(flags)]
             Im_yy  = Im_yy[np.logical_not(flags)]
             uvdist = uvdist[np.logical_not(flags)]
-            
+
             # Combining Real part and Imag part
             XX_VIS = Re_xx + Im_xx*1.0j
             YY_VIS = Re_yy + Im_yy*1.0j
-            print(f"Flux amplitude: XX = {np.mean(abs(XX_VIS))}\tYY = {np.mean(abs(YY_VIS))}\n")
+            print(f"Average flux amplitude: XX = {np.mean(abs(XX_VIS))}\tYY = {np.mean(abs(YY_VIS))}\n")
+            
             data_dict = [XX_data, YY_data, UVdist]
             for data in data_dict:
                 if s not in data['spw']:
                     data['spw'][s] = []
+
             data_dict[0]['spw'][s].append(XX_VIS)
             data_dict[1]['spw'][s].append(YY_VIS)
             data_dict[2]['spw'][s].append(uvdist)
@@ -162,6 +174,15 @@ def FitRpol(XXYYdata, StokesI):
 def get_ParAngle(visibility, field):
 
     ParAngle = {'spw':{}}
+    
+    if isinstance(field, list):
+        print("Get garallactic angle for field", field)
+    else:
+        ms.open(visibility)
+        info = ms.summary()
+        ms.close()
+        field = range(info['nfields'])
+    print("Total field number:", len(field), '\n')
 
     # make a directory to save the ascii file from the plotms
     l = subprocess.run("ls", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -215,14 +236,14 @@ def get_ParAngle(visibility, field):
     return ParAngle
 
 
-def Rpol_PA_FITTING(Parallactic_Angle, P, a, c):
+def Rpol_PA_FITTING(Parallactic_Angle, P, a, b):
     '''
     P: the polarization percentage
     a: (polarization position angle in the sky frame) - (E-vector)
 
     return the function model for the polarization ratio to the parallactic angle
     '''
-    return P * np.cos(2 * (a - np.array(Parallactic_Angle))) + c
+    return 2 * P * np.cos(2 * (a - np.array(Parallactic_Angle))) + 2 * b
 
 def Fit_RpolPA(Rpol, ParAngle):
     rpol = Rpol[1]
@@ -247,7 +268,7 @@ def plot_fitting(Rpol, ParAngle, Fitting, save=True):
     rpol   = Rpol[1]
     PA     = ParAngle
     params = Fitting[0]
-
+  #  target = source
     l = subprocess.run("ls", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     l = l.stdout.decode()
     l = l.split('\n')
@@ -270,6 +291,16 @@ def plot_fitting(Rpol, ParAngle, Fitting, save=True):
             plt.savefig(f'images/Rpol-PA_fitting_spw{spw}.pdf')
 
 vis = "sgrastar_b8/calibrated.ms.12m.uvaver"
+'''
+XXYYdata      = read_DATA(vis, 0)
+StokesI       = Fit_I(XXYYdata)
+Rpol          = FitRpol(XXYYdata, StokesI)
+ParAngle_list = get_ParAngle(vis, 0)
+Fitting       = Fit_RpolPA(Rpol, ParAngle_list)
+plot_fitting(Rpol, ParAngle_list, Fitting, save=True)
+
+'''
+
 field_ids = [0, 18, 25, 94, 101, 133, 134]
 
 XXYYdata      = read_DATA(vis, field_ids)
@@ -277,4 +308,4 @@ StokesI       = Fit_I(XXYYdata)
 Rpol          = FitRpol(XXYYdata, StokesI)
 ParAngle_list = get_ParAngle(vis, field_ids)
 Fitting       = Fit_RpolPA(Rpol, ParAngle_list)
-plot_fitting(Rpol, ParAngle_list, Fitting, save=True)
+# plot_fitting(Rpol, ParAngle_list, Fitting, save=True)
