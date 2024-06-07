@@ -14,7 +14,7 @@
 |5.4.0|centos:7.5.1804|Attempting|updating yum|
 |5.6.1|centos:7.7.1908|Attempting|updating yum|
 
-- images cannot use directly and their issues
+- images cannot use directly and their issues  
 |image:tag |Issue description|
 |:--------:|:----------------|
 |centos:6.6|the yum cannot be update properly|
