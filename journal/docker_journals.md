@@ -1,17 +1,26 @@
-# 2024 June 06
+# Docker Records
 ## Building containers
 |CASA Version|Tried image|Status|Description|
 |:----------:|----------:|:-----|:----------|
 |4.2.2|centos:6.10|Libraries installed, exist import error|`NameError: global name 'pwd_module' is not defined`|
-|     |centos:6.6 |failed|container cannot run properly|
+|     |centos:6.8 |Attempting|updating yum|
 |4.3.1|centos:6.10|Libraries installed, exist import error|`NameError: global name 'pwd_module' is not defined`|
-|     |centos:6.7 |failed|cannot update yum|
-|4.5.1|centos:6.10|Success||
-|4.5.2|centos:6.10|Success||
-|4.5.3|centos:6.10|Success||
-|4.7.0|centos:7.3.1611|trying|updating yum|
-|4.7.2|centos:7.3.1611|trying|updating yum|
-|||||
+|4.5.1|centos:6.10|Succeed||
+|4.5.2|centos:6.10|Succeed||
+|4.5.3|centos:6.10|Succeed||
+|4.7.0|centos:7.3.1611|Succeed||
+|4.7.2|centos:7.3.1611|Succeed||
+|5.1.1|centos:7.4.1708|Attempting|updating yum|
+|5.4.0|centos:7.5.1804|Attempting|updating yum|
+|5.6.1|centos:7.7.1908|Attempting|updating yum|
+
+- images cannot use directly and their issues
+|image:tag |Issue description|
+|:--------:|:----------------|
+|centos:6.6|the yum cannot be update properly|
+|centos:6.7|the yum cannot be update properly|
+
+
 ## Utilize the docker container, images and tar.gz file
 1. Commit a container to image
 ```bash
@@ -27,7 +36,7 @@ docker load < [filename].tar.gz
 ```
 
 
-- tips for solve the issue: 
+### Tips for solving issues: 
 1. `Error: Failed to download metadata for repo ‘appstream’: Cannot prepare internal mirrorlist`:  
 ```bash
 cd /etc/yum.repos.d/
@@ -35,6 +44,14 @@ sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
 sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
 ```
 2. `docker: Error response from daemon: no command specified.`
-(not solved yet for centos:6.6 for 4.2.2)  
-https://blog.csdn.net/shenghuiping2001/article/details/93378185
+(solved for centos:6.6)  
+https://blog.csdn.net/shenghuiping2001/article/details/93378185  
+The reason is because the image configuration file does not includes the necessary command.
+Solution:  
+When initializing the container:
+```bash
+docker run -it --name [container_name] [image:tag] [command]
+
+docker run -it --name docker_casa422-1 "/bin/bash"
+```
 
