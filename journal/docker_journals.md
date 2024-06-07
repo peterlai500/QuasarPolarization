@@ -14,8 +14,9 @@
 |5.4.0|centos:7.5.1804|Attempting|updating yum|
 |5.6.1|centos:7.7.1908|Attempting|updating yum|
 
-- images cannot use directly and their issues  
-|image:tag |Issue description|
+- images cannot use directly and their issues:  
+
+|image     |Issue description|
 |:--------:|:----------------|
 |centos:6.6|the yum cannot be update properly|
 |centos:6.7|the yum cannot be update properly|
@@ -46,7 +47,7 @@ sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /
 2. `docker: Error response from daemon: no command specified.`
 (solved for centos:6.6)  
 https://blog.csdn.net/shenghuiping2001/article/details/93378185  
-The reason is because the image configuration file does not includes the necessary command.
+The reason is because the image configuration file does not includes the necessary command.  
 Solution:  
 When initializing the container:
 ```bash
