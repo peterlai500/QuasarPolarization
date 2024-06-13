@@ -2,17 +2,16 @@
 ## Building containers
 |CASA Version|Tried image|Status|Description|
 |:----------:|----------:|:-----|:----------|
-|4.2.2|centos:6.10|Libraries installed, exist import error|`NameError: global name 'pwd_module' is not defined`|
-|     |centos:6.8 |Attempting|updating yum|
-|4.3.1|centos:6.10|Libraries installed, exist import error|`NameError: global name 'pwd_module' is not defined`|
+|4.2.2|centos:6.10|Succeed||
+|4.3.1|centos:6.10|Succeed||
 |4.5.1|centos:6.10|Succeed||
 |4.5.2|centos:6.10|Succeed||
 |4.5.3|centos:6.10|Succeed||
 |4.7.0|centos:7.3.1611|Succeed||
 |4.7.2|centos:7.3.1611|Succeed||
-|5.1.1|centos:7.4.1708|Attempting|updating yum|
-|5.4.0|centos:7.5.1804|Attempting|updating yum|
-|5.6.1|centos:7.7.1908|Attempting|updating yum|
+|5.1.1|centos:7.4.1708|Succeed||
+|5.4.0|centos:7.5.1804|Libraries installed, exist module error|`failed to load casa: No module named _atmosphere`|
+|5.6.1|centos:7.7.1908|Libraries installed, exist module error|`failed to load casa: No module named _atmosphere`|
 
 - images cannot use directly and their issues:  
 
@@ -23,11 +22,7 @@
 
 
 ## Utilize the docker container, images and tar.gz file
-1. Commit a container to image
-```bash
-docker commit [contianer_id] [repository[:tag]]
-```
-2. Save an image to a tar.gz file using gzip
+1. Save an image to a tar.gz file using gzip
 ```bash
 docker save [repository[:tag]] | gzip > [filename].tar.gz
 ```
@@ -55,4 +50,6 @@ docker run -it --name [container_name] [image:tag] [command]
 
 docker run -it --name docker_casa422-1 "/bin/bash"
 ```
-
+3. `NameError: global name 'pwd_module' is not defined` for CASA 4.2.2, 4.3.1
+Dive into the `/[CASA_dir]/lib64/python2.7/get_user.py`.  
+Modify the `pwd_module` in line 20 into `pwd`.
