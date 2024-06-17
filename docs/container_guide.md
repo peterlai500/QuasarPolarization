@@ -45,10 +45,23 @@ yum -y install wget
 wget https://casa.nrao.edu/download/distro/casa/release/el6/casa-release-4.3.1-pipe-1-el6.tar.gz
 tar zxvf casa-release-4.3.1-pipe-1-el6.tar.gz
 
-# 
+# Install library
+yum -y install libpng
+yum -y install freetype
+yum -y install libSM
+yum -y install libXi
+yum -y install libXrender
+yum -y install libXrandr
+yum -y install libXfixes
+yum -y install libXcursor
+yum -y install libXinerama
+yum -y install fontconfig
+yum -y install libxslt
 
+# Fix the typo of the library code in CASA
+sed -i 's/pwd_module/pwd/g' /casa-release-4.3.1-pipe-el6/lib/python2.7/get_user.py
 ```
-- **For CentOS 7**
+- **For CentOS 7**(casa-release-4.7.0)
 ```bash
 # Container
 
@@ -63,4 +76,15 @@ tar zxvf casa-release-4.7.0-1-el7.tar.gz
 # Install the Libraries
 yum -y install perl
 yum -y install libSM
+yum -y install libX11
+yum -y install libXext
+yum -y install freetype
+yum -y install libXi
+yum -y install libXrender
+yum -y install libXrandr
+yum -y install libXfixes
+yum -y install libXcursor
+yum -y install libXinerama
+yum -y install fontconfig
+yum -y install libGL
 ```
