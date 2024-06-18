@@ -1,11 +1,11 @@
 # Document of Fitting
 
-For the `[fitting.py](https://github.com/peterlai500/QuasarPolarization/blob/main/fitting.py)` in this project.
+For the [fitting.py](https://github.com/peterlai500/QuasarPolarization/blob/main/fitting.py) in this project.
 
 ## Functions
 ### `ChanAverage`
-Utilizing the mstransform in CASA, averaging the channels in  the measurement set.
-It would make a new single-channel ms without affect the original multi-channel ms. The new ms name would be assign to the variable name and based on the name of the original one. According to the code, the new filename would be `original.chanaver`  
+Utilizing the `mstransform` in CASA, averaging the channels in  the measurement set.
+It would make a new single-channel ms without affect the original multi-channel ms. The new ms name would be assign to the variable name and based on the name of the original one. According to the code, the new filename would be `[original_name].chanaver`  
 E.g., 
 ```Python
 # known the ms name
@@ -22,6 +22,9 @@ E.g.,
 ```Python
 field_list = [2, 5, 24, 92, 13]
 XXYYdata = read_DATA(vis ,field_list)`
+
+# For reading data without specify any field
+XXYYdata = read_DATA(vis ,0)	# I prefer input 0 as "no specific field select"
 ```
 The dictionary of all the information is assigned to `read_XXYY`. We can read all the data in dict to extract the XX, YY, and uvdist respectively. The specific field we desire would be saved by the order the list gave.
 E.g., 
@@ -59,4 +62,23 @@ ParAngle_list = get_ParAngle(vis, field_list)
 ```
 
 ### `Fit_RpolPA`
-For analyzing the $$\frac{Q}{I} - \delta \equiv \frac{XX-YY}{2I} - \delta = P \cdot \cos 2(\Psi - \eta - \phi) $$
+For analyzing the polarization percentage $P$, polarization position angle $\Psi$, we need to fit the ratio of $\frac{XX-YY}{I}$ and the parallactic angle to the below relation.
+$$\frac{Q}{I} - \delta \equiv \frac{XX-YY}{2I} - \delta = P \cdot \cos 2(\Psi - \eta - \phi)$$  
+For the model in the code, polarization percentage and position angle are the first and second fitting parameters respectively.
+E.g.,  
+```Python
+# Model
+def Rpol_PA_FITTING(Parallactic_Angle, P, Psi, delta):
+    '''
+    P: the polarization percentage
+    a: (polarization position angle in the sky frame) - (E-vector)
+
+    return the function model for the polarization ratio to the parallactic angle
+    '''
+    return 2 * P * np.cos(2 * (Psi - np.array(Parallactic_Angle))) + 2 * delta
+
+
+
+Fitting       = Fit_RpolPA(Rpol, ParAngle_list)
+```
+The model can still be modify, such as the $E-vector$ term can be modify for different band in the observation

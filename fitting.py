@@ -236,14 +236,14 @@ def get_ParAngle(visibility, field):
     return ParAngle
 
 
-def Rpol_PA_FITTING(Parallactic_Angle, P, a, b):
+def Rpol_PA_FITTING(Parallactic_Angle, P, Psi, delta):
     '''
     P: the polarization percentage
     a: (polarization position angle in the sky frame) - (E-vector)
 
     return the function model for the polarization ratio to the parallactic angle
     '''
-    return 2 * P * np.cos(2 * (a - np.array(Parallactic_Angle))) + 2 * b
+    return 2 * P * np.cos(2 * (Psi - np.array(Parallactic_Angle))) + 2 * delta
 
 def Fit_RpolPA(Rpol, ParAngle):
     rpol = Rpol[1]
