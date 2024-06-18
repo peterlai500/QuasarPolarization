@@ -10,4 +10,4 @@ Utilizing the mstransform in CASA, averaging the channels in  the measurement se
 Read the XX and YY and UV-distance information spw by spw
 
 ### `Fit_I`
-The definition of the Stokes parameters are $$I = \frac{XX+YY}{2}$$, $$Q = \frac{XX-YY}{2}$$
+The definition of the Stokes parameters are $$I = \frac{XX+YY}{2}\\Q = \frac{XX-YY}{2}$$
