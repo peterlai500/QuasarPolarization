@@ -61,7 +61,7 @@ yum -y install libxslt
 # Fix the typo of the library code in CASA
 sed -i 's/pwd_module/pwd/g' /casa-release-4.3.1-pipe-el6/lib/python2.7/get_user.py
 ```
-- **For CentOS 7**(casa-release-4.7.0)
+- **For CentOS 7** (casa-release-4.7.0)
 ```bash
 # Container
 
@@ -87,4 +87,19 @@ yum -y install libXcursor
 yum -y install libXinerama
 yum -y install fontconfig
 yum -y install libGL
+```
+
+6. Make container into image
+```
+# Local
+docker container commit [container_id] [repository[:tag]]
+```
+7. Pack image into tar.gz
+```
+# Local
+docekr docker save [repository[:tag]] | gzip > [filename].tar.gz
+```
+If the tar.gz were given we can load the tarball into image
+```
+docker load < [filename].tar.gz
 ```
