@@ -7,6 +7,7 @@ For the purpose of constraining the magnetic field configuration around the even
 Most of the necessary packages can be installed through the [`Quasarpol.yml`](https://github.com/peterlai500/QuasarPolarization/blob/main/Quasarpol.yml) file.  
 By running in terminal:  
 `conda env create -f Quasarpol.yml `
+> `casaplotms` in no longer avaiable by `pip install` using the yml install might failed.
 
 - astropy(>=4.2.1)
 - astroquery(v0.4.7.dev8738)  
